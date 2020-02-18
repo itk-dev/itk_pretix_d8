@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "description": "ITK Pretix",
+  "name": "itk_pretix",
+  "author": "ITK",
+  "license": "ISC",
+  "devDependencies": {
+    "@symfony/webpack-encore": "^0.28.2",
+    "dawa-autocomplete2": "^0.13.1",
+    "es6-object-assign": "^1.1.0",
+    "jquery": "^3.4.1",
+    "jquery-validation": "^1.19.1",
+    "terser-webpack-plugin": "^2.3.4"
+  }
+}

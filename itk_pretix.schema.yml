@@ -1,0 +1,10 @@
+field.widget.settings.pretix_widget_type:
+  type: mapping
+  label: 'Pretix widget type widget settings'
+  mapping:
+    size:
+      type: integer
+      label: 'Size'
+    placeholder:
+      type: textfield
+      label: 'Placeholder'
