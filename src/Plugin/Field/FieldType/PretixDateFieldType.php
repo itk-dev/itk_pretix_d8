@@ -8,19 +8,21 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\Core\TypedData\TypedDataInterface;
+use Drupal\datetime\DateTimeComputed;
+use Drupal\itk_pretix\UuidComputed;
 
 /**
- * Plugin implementation of the 'pretix_field_type' field type.
+ * Plugin implementation of the 'pretix_date_field_type' field type.
  *
  * @FieldType(
- *   id = "pretix_field_type",
- *   label = @Translation("Pretix field type"),
+ *   id = "pretix_date_field_type",
+ *   label = @Translation("Pretix date field type"),
  *   description = @Translation("Provides values required by pretix API"),
- *   default_widget = "pretix_widget_type",
- *   default_formatter = "pretix_formatter_type"
+ *   default_widget = "pretix_date_widget_type",
+ *   default_formatter = "pretix_date_formatter_type"
  * )
  */
-class PretixFieldType extends FieldItemBase {
+class PretixDateFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
@@ -29,7 +31,7 @@ class PretixFieldType extends FieldItemBase {
     $properties['uuid'] = DataDefinition::create('any')
       ->setLabel(t('UUID'))
       ->setComputed(TRUE)
-      ->setClass('\Drupal\itk_pretix\UuidComputed')
+      ->setClass(UuidComputed::class)
       ->setSetting('uuid source', 'value')
       ->setRequired(TRUE);
     $properties['location'] = DataDefinition::create('string')
@@ -40,12 +42,12 @@ class PretixFieldType extends FieldItemBase {
       ->setRequired(TRUE);
     $properties['time_from'] = DataDefinition::create('any')
       ->setLabel(new TranslatableMarkup('Start time'))
-      ->setClass('\Drupal\datetime\DateTimeComputed')
+      ->setClass(DateTimeComputed::class)
       ->setSetting('date source', 'value')
       ->setRequired(TRUE);
     $properties['time_to'] = DataDefinition::create('any')
       ->setLabel(new TranslatableMarkup('End time'))
-      ->setClass('\Drupal\datetime\DateTimeComputed')
+      ->setClass(DateTimeComputed::class)
       ->setSetting('date source', 'value')
       ->setRequired(TRUE);
     $properties['spots'] = DataDefinition::create('integer')

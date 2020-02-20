@@ -10,17 +10,17 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
- * Plugin implementation of the 'pretix_formatter_type' formatter.
+ * Plugin implementation of the 'pretix_date_formatter_type' formatter.
  *
  * @FieldFormatter(
- *   id = "pretix_formatter_type",
- *   label = @Translation("Pretix formatter type"),
+ *   id = "pretix_date_formatter_type",
+ *   label = @Translation("Pretix date formatter type"),
  *   field_types = {
- *     "pretix_field_type"
+ *     "pretix_date_field_type"
  *   }
  * )
  */
-class PretixFormatterType extends FormatterBase {
+class PretixDateFormatterType extends FormatterBase {
 
   /**
    * {@inheritdoc}

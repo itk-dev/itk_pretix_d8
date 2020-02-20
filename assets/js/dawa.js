@@ -7,7 +7,7 @@ require('es6-object-assign/auto');
 const dawaAutocomplete = require('dawa-autocomplete2');
 
 $(() => {
-  let addressList = document.querySelectorAll('.field--type-pretix-field-type .js-dawa-element');
+  let addressList = document.querySelectorAll('.field--type-pretix-date-field-type .js-dawa-element');
   for(let i = 0; i < addressList.length; i++) {
     let address = addressList[i];
     if (address !== null) {
