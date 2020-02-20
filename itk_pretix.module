@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * @file
+ * Contains itk_pretix.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function itk_pretix_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the itk_pretix module.
+    case 'help.page.itk_pretix':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('A module using pretix API to generate Pretix events from field values') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function itk_pretix_theme() {
+  return [
+    'itk_pretix_date_entry' => [
+      'template' => 'itk-pretix-date-entry',
+      'variables' => ['variables' => NULL]
+    ],
+  ];
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function itk_pretix_element_info_alter(array &$types) {
+  $types['datetime']['#process'][] = '_itk_pretix_process_datetime_element';
+}
+
+/**
+ * Remove seconds from datetime form element.
+ *
+ * @param array $element
+ *   The form element.
+ * @return mixed
+ *   The modified form element.
+ */
+function _itk_pretix_process_datetime_element(array $element) {
+  if ($element['#date_time_element'] !== 'none') {
+    $element['#date_time_format'] = 'H:i';
+  }
+  if (!empty($element['time']['#value'])) {
+    $parts = explode(':', $element['time']['#value']);
+    $parts = array_splice($parts, 0, 2);
+    $element['time']['#value'] = implode(':', $parts);
+  }
+
+  $element['time']['#attributes']['step'] = 60;
+  return $element;
+}

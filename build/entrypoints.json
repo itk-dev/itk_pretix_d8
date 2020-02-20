@@ -1,0 +1,12 @@
+{
+  "entrypoints": {
+    "itk_pretix_dawa": {
+      "css": [
+        "/build/itk_pretix_dawa.css"
+      ],
+      "js": [
+        "/build/itk_pretix_dawa.js"
+      ]
+    }
+  }
+}

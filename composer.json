@@ -1,0 +1,8 @@
+{
+    "name": "itk-dev/itk_pretix",
+    "type": "drupal-module",
+    "description": "A module using pretix API to generate events from field values",
+    "keywords": ["Drupal"],
+    "license": "MIT",
+    "minimum-stability": "dev"
+}
