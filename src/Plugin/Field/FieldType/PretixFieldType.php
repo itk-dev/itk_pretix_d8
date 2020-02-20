@@ -102,32 +102,6 @@ class PretixFieldType extends FieldItemBase {
   /**
    * {@inheritdoc}
    */
-  /**
-  public function getConstraints() {
-    $constraints = parent::getConstraints();
-
-    if ($max_length = $this->getSetting('max_length')) {
-      $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
-      $constraints[] = $constraint_manager->create('ComplexData', [
-        'value' => [
-          'Length' => [
-            'max' => $max_length,
-            'maxMessage' => t('%name: may not be longer than @max characters.', [
-              '%name' => $this->getFieldDefinition()->getLabel(),
-              '@max' => $max_length
-            ]),
-          ],
-        ],
-      ]);
-    }
-
-    return $constraints;
-  }
-   */
-
-  /**
-   * {@inheritdoc}
-   */
   public function isEmpty() {
     $location = $this->get('location')->getValue();
     $timeFrom = $this->get('time_from')->getValue();
