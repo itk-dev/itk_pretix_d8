@@ -1,7 +1,6 @@
-require('../css/dawa.css');
-
 const $ = require('jquery');
 require('jquery-validation');
+import 'dawa-autocomplete2/css/dawa-autocomplete2.css';
 
 // IE 11 does not support Object.assign
 require('es6-object-assign/auto');
