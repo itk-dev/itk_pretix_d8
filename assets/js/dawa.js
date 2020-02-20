@@ -6,25 +6,37 @@ import 'dawa-autocomplete2/css/dawa-autocomplete2.css';
 require('es6-object-assign/auto');
 const dawaAutocomplete = require('dawa-autocomplete2');
 
-$(() => {
-  let addressList = document.querySelectorAll('.field--type-pretix-date-field-type .js-dawa-element');
-  for(let i = 0; i < addressList.length; i++) {
-    let address = addressList[i];
-    if (address !== null) {
-      // Address autocomplete using https://dawa.aws.dk/.
-      let addressWrapper = document.createElement('div');
-      addressWrapper.setAttribute('class', 'dawa-autocomplete-container');
-      address.parentNode.replaceChild(addressWrapper, address);
-      addressWrapper.appendChild(address);
+const buildDawaAutocompleteElements = (context) => {
+  const addresses = Array.from(context.querySelectorAll('.field--type-pretix-date-field-type .js-dawa-element'));
+  addresses.forEach(address => {
+    // Check if dawa autocomplete has already been initialized.
+    if ($(address).closest('.dawa-autocomplete-container').length > 0) {
+      return;
+    }
 
-      dawaAutocomplete.dawaAutocomplete(address, {
-        select: function (selected) {
-          fetch(selected.data.href)
-            .then(function (response) {
-              return response.json()
-            })
-        }
-      })
+    // Address autocomplete using https://dawa.aws.dk/.
+    let addressWrapper = document.createElement('div');
+    addressWrapper.setAttribute('class', 'dawa-autocomplete-container');
+    address.parentNode.replaceChild(addressWrapper, address);
+    addressWrapper.appendChild(address);
+
+    dawaAutocomplete.dawaAutocomplete(address, {
+      select: function (selected) {
+        fetch(selected.data.href)
+          .then(function (response) {
+            return response.json()
+          })
+      }
+    })
+  })
+}
+
+$(() => {
+  Drupal.behaviors.itk_pretix_dawa = {
+    attach: (context, settings) => {
+      buildDawaAutocompleteElements(context);
     }
   }
+
+  buildDawaAutocompleteElements(document)
 });
