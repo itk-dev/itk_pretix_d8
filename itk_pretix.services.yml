@@ -1,0 +1,3 @@
+services:
+  itk_pretix.node_helper:
+    class: Drupal\itk_pretix\NodeHelper

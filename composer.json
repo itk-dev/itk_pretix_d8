@@ -5,6 +5,9 @@
     "keywords": ["Drupal"],
     "license": "MIT",
     "minimum-stability": "dev",
+    "require": {
+        "itk-dev/pretix-api-client-php": "dev-develop"
+    },
     "require-dev": {
         "drupal/coder": "^8.3.1",
         "dealerdirect/phpcodesniffer-composer-installer": "dev-master"
