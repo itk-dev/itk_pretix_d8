@@ -6,7 +6,7 @@ https://pretix.eu/ to be made.
 Through the Pretix API it is possible to add, change or remove Pretix
 event date entries from the Drupal interface.
 
-1) Add a new field of pretix_field_type to an entity.
+1) Add a new field of pretix_date_field_type to an entity.
 2) Add a pretix connection through the settings (local.settings.php).
 3) Watch the magic happen.
 

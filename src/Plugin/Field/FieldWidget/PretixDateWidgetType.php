@@ -8,18 +8,18 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
- * Plugin implementation of the 'pretix_widget_type' widget.
+ * Plugin implementation of the 'pretix_date_widget_type' widget.
  *
  * @FieldWidget(
- *   id = "pretix_widget_type",
+ *   id = "pretix_date_widget_type",
  *   module = "itk_pretix",
- *   label = @Translation("Pretix widget type"),
+ *   label = @Translation("Pretix date widget type"),
  *   field_types = {
- *     "pretix_field_type"
+ *     "pretix_date_field_type"
  *   }
  * )
  */
-class PretixWidgetType extends WidgetBase {
+class PretixDateWidgetType extends WidgetBase {
   /**
    * {@inheritdoc}
    */
