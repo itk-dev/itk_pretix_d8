@@ -6,9 +6,10 @@ https://pretix.eu/ to be made.
 Through the Pretix API it is possible to add, change or remove Pretix
 event date entries from the Drupal interface.
 
-1) Add a new field of pretix_date_field_type to an entity.
-2) Add a pretix connection through the settings (local.settings.php).
-3) Watch the magic happen.
+1. Add a new field of type `pretix date field type` to an entity.
+2. Add a new field of type `pretix event settings` to the entity.
+3. Add a pretix connection through the settings (local.settings.php).
+4. Watch the magic happen.
 
 ## Building assets
 
@@ -28,4 +29,21 @@ Build for production:
 
 ```sh
 yarn encore production
+```
+
+## Coding standards
+
+The code must follw the [Drupal Coding Standards](https://www.drupal.org/docs/develop/standards)
+
+Check the coding standards by running
+
+```sh
+composer install
+composer check-coding-standards
+```
+
+Apply the coding standards by running
+
+```sh
+composer apply-coding-standards
 ```

@@ -4,5 +4,23 @@
     "description": "A module using pretix API to generate events from field values",
     "keywords": ["Drupal"],
     "license": "MIT",
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "require-dev": {
+        "drupal/coder": "^8.3.1",
+        "dealerdirect/phpcodesniffer-composer-installer": "dev-master"
+    },
+    "scripts": {
+        "check-coding-standards/phpcs": [
+            "vendor/bin/phpcs --standard=phpcs.xml.dist"
+        ],
+        "check-coding-standards": [
+            "@check-coding-standards/phpcs"
+        ],
+        "apply-coding-standards/phpcs": [
+            "scripts/phpcbf --standard=phpcs.xml.dist"
+        ],
+        "apply-coding-standards": [
+            "@apply-coding-standards/phpcs"
+        ]
+    }
 }
