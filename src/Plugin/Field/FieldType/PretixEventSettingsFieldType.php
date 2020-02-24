@@ -59,9 +59,17 @@ class PretixEventSettingsFieldType extends FieldItemBase {
    * {@inheritdoc}
    */
   public function isEmpty() {
-    $templateEvent = $this->get('template_event')->getValue();
+    return FALSE;
+  }
 
-    return empty($templateEvent);
+  /**
+   *
+   */
+  public function validate() {
+    $violations = parent::validate();
+    if (0 === $violations->count()) {
+
+    }
   }
 
 }

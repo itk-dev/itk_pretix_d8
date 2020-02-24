@@ -33,7 +33,7 @@ class PretixConfigForm extends ConfigFormBase {
     $config = $this->config('itk_pretix.pretixconfig');
 
     $form['pretix_url'] = [
-      '#type' => 'textfield',
+      '#type' => 'url',
       '#description' => $this->t('The full pretix url, e.g. https://pretix.eu/'),
       '#title' => $this->t('pretix url'),
       '#size' => 64,
@@ -71,6 +71,8 @@ class PretixConfigForm extends ConfigFormBase {
     parent::submitForm($form, $form_state);
 
     $this->config('itk_pretix.pretixconfig')
+      ->set('pretix_url', $form_state->getValue('pretix_url'))
+      ->set('organizer_slug', $form_state->getValue('organizer_slug'))
       ->set('api_token', $form_state->getValue('api_token'))
       ->save();
   }

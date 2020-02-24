@@ -6,8 +6,8 @@ namespace Drupal\itk_pretix\Pretix;
  * Mailer.
  */
 class Mailer {
-  const PRETIX_EVENT_ORDER_PAID_TEMPLATE = 'itk_pretix_event_order_paid_template';
-  const PRETIX_EVENT_ORDER_CANCELED_TEMPLATE = 'itk_pretix_event_order_canceled_template';
+  public const PRETIX_EVENT_ORDER_PAID_TEMPLATE = 'itk_pretix_event_order_paid_template';
+  public const PRETIX_EVENT_ORDER_CANCELED_TEMPLATE = 'itk_pretix_event_order_canceled_template';
 
   /**
    * Create an instance.

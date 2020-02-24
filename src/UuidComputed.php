@@ -5,7 +5,7 @@ namespace Drupal\itk_pretix;
 use Drupal\Core\TypedData\TypedData;
 use Drupal\Core\TypedData\DataDefinitionInterface;
 use Drupal\Core\TypedData\TypedDataInterface;
-use Drupal\Core\TypedData\ComputedItemListTrait;
+
 /**
  * A computed property for pretix Uuid.
  *
@@ -54,4 +54,5 @@ class UuidComputed extends TypedData {
       $this->parent->onChange($this->name);
     }
   }
+
 }

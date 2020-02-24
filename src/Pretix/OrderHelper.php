@@ -7,7 +7,7 @@ namespace Drupal\itk_pretix\Pretix;
  */
 class OrderHelper extends AbstractHelper {
 
-  const PRETIX_EVENT_ORDER_PLACED = 'pretix.event.order.placed';
+  public const PRETIX_EVENT_ORDER_PLACED = 'pretix.event.order.placed';
 
   const PRETIX_EVENT_ORDER_PLACED_REQUIRE_APPROVAL = 'pretix.event.order.placed.require_approval';
 
@@ -162,8 +162,8 @@ class OrderHelper extends AbstractHelper {
 
     $quotas = array_filter(
       $quotas, static function ($quota) use ($subEvents) {
-      return isset($quota->subevent, $subEvents[$quota->subevent]);
-    }
+        return isset($quota->subevent, $subEvents[$quota->subevent]);
+      }
     );
 
     foreach ($quotas as $quota) {
@@ -204,36 +204,6 @@ class OrderHelper extends AbstractHelper {
     }
 
     return $quotasResult;
-  }
-
-  /**
-   * Get the questions for a particular event
-   *
-   * @param $organizer
-   *   The organizer slug.
-   * @param $event
-   *   The event slug.
-   *
-   * @return array
-   *   All questions for the event.
-   */
-  public function getQuestions($organizer, $event) {
-    $questions = [];
-    $data = $this->client->getQuestions($organizer, $event);
-
-    if($this->isApiError($data)) {
-      $this->apiError($data, 'Cannot get questions');
-    }
-
-    $data = $data->data->results;
-
-    if (!empty($data)) {
-      foreach ($data as $item) {
-        $questions[$item->id] = $item->question->da;
-      }
-    }
-
-    return $questions;
   }
 
 }
