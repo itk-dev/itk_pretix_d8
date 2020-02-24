@@ -30,15 +30,16 @@ class PretixEventSettingsWidgetType extends WidgetBase {
     array &$form,
     FormStateInterface $form_state
   ) {
-    // @TODO Get template events from pretix.
-    $templateEvents = [];
+    /** @var \Drupal\node\Entity\Node $node */
+    $node = $items->getParent()->getEntity();
+    $templateEvents = \Drupal::service('itk_pretix.node_helper')->getTemplateEvents($node);
     $templateEventOptions = array_combine($templateEvents, $templateEvents);
 
     $element['pretix_event_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('pretix settings'),
       // Collapse when editing a node.
-      '#open' => NULL === $items->getParent()->getEntity()->id(),
+      '#open' => NULL === $node->id(),
 
       'template_event' => [
         '#type' => 'select',
@@ -47,7 +48,7 @@ class PretixEventSettingsWidgetType extends WidgetBase {
         '#description' => $this->t('Select the template event to clone when creating the pretix event'),
         '#default_value' => $items[$delta]->template_event ?? NULL,
         '#empty_option' => t('Select template event'),
-        '#required' => TRUE,
+        '#required' => !empty($templateEventOptions),
       ],
 
       'synchronize_event' => [
