@@ -25,6 +25,11 @@ class PretixDateWidgetType extends WidgetBase {
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
+    $element['uuid'] = [
+      '#type' => 'hidden',
+      '#default_value' => $items[$delta]->uuid ?? '',
+    ];
+
     $element['location'] = [
       '#type' => 'textfield',
       '#title' => t('Location'),
@@ -93,7 +98,7 @@ class PretixDateWidgetType extends WidgetBase {
   /**
    * Round seconds to nearest hour.
    *
-   * @param $seconds
+   * @param int $seconds
    *   A timestamp.
    *
    * @return float|int

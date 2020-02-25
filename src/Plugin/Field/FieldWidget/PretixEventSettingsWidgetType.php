@@ -73,9 +73,10 @@ class PretixEventSettingsWidgetType extends WidgetBase {
     if (1 === $this->fieldDefinition->getFieldStorageDefinition()->getCardinality()) {
       $element += [
         '#type' => 'details',
-        '#title' => $this->t('pretix settings'),
-        // Collapse when editing a node or when some value is not valid.
-        '#open' => NULL === $node->id() || count($items[$delta]->validate()) > 0,
+        // Collapse when editing a node.
+        '#open' => NULL === $node->id()
+          // Or when some value is not valid.
+        || count($items[$delta]->validate() ?? []) > 0,
       ];
     }
 

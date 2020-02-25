@@ -7,6 +7,7 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
 
 /**
  * Implements hook_help().
@@ -68,20 +69,20 @@ function _itk_pretix_process_datetime_element(array $element) {
 /**
  * Implements hook_node_insert().
  */
-function itk_pretix_node_insert(Node $node) {
-  \Drupal::service('itk_pretix.node_helper')->sync($node, 'insert');
+function itk_pretix_node_insert(NodeInterface $node) {
+  \Drupal::service('itk_pretix.node_helper')->synchronizeEvent($node, 'insert');
 }
 
 /**
  * Implements hook_node_update().
  */
-function itk_pretix_node_update(Node $node) {
-  \Drupal::service('itk_pretix.node_helper')->sync($node, 'update');
+function itk_pretix_node_update(NodeInterface $node) {
+  \Drupal::service('itk_pretix.node_helper')->synchronizeEvent($node, 'update');
 }
 
 /**
  * Implements hook_node_delete().
  */
-function itk_pretix_node_delete(Node $node) {
-  \Drupal::service('itk_pretix.node_helper')->sync($node, 'delete');
+function itk_pretix_node_delete(NodeInterface $node) {
+  \Drupal::service('itk_pretix.node_helper')->synchronizeEvent($node, 'delete');
 }

@@ -266,12 +266,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/itk-dev/pretix-api-client-php.git",
-                "reference": "8683b98e5370c2b68d6313e72e8d3af1685cb354"
+                "reference": "8883c3a68e5995c62973f7124d8a7f028db51ea4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/itk-dev/pretix-api-client-php/zipball/8683b98e5370c2b68d6313e72e8d3af1685cb354",
-                "reference": "8683b98e5370c2b68d6313e72e8d3af1685cb354",
+                "url": "https://api.github.com/repos/itk-dev/pretix-api-client-php/zipball/8883c3a68e5995c62973f7124d8a7f028db51ea4",
+                "reference": "8883c3a68e5995c62973f7124d8a7f028db51ea4",
                 "shasum": ""
             },
             "require": {
@@ -302,7 +302,7 @@
                 }
             ],
             "description": "PHP client for pretix api",
-            "time": "2020-02-24T12:59:27+00:00"
+            "time": "2020-02-25T16:25:56+00:00"
         },
         {
             "name": "psr/http-message",
@@ -606,12 +606,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/squizlabs/PHP_CodeSniffer.git",
-                "reference": "8909858f9cbfc16ad1b4a2a4b61ff7a3db843251"
+                "reference": "daa440f9150bba17353c2ddfbdb7d04b37ae1ed5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/8909858f9cbfc16ad1b4a2a4b61ff7a3db843251",
-                "reference": "8909858f9cbfc16ad1b4a2a4b61ff7a3db843251",
+                "url": "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/daa440f9150bba17353c2ddfbdb7d04b37ae1ed5",
+                "reference": "daa440f9150bba17353c2ddfbdb7d04b37ae1ed5",
                 "shasum": ""
             },
             "require": {
@@ -649,7 +649,7 @@
                 "phpcs",
                 "standards"
             ],
-            "time": "2020-02-23T21:11:52+00:00"
+            "time": "2020-02-26T04:58:49+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",

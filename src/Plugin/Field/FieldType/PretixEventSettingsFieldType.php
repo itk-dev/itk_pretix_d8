@@ -62,14 +62,4 @@ class PretixEventSettingsFieldType extends FieldItemBase {
     return FALSE;
   }
 
-  /**
-   *
-   */
-  public function validate() {
-    $violations = parent::validate();
-    if (0 === $violations->count()) {
-
-    }
-  }
-
 }

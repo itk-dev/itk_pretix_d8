@@ -2,36 +2,55 @@
 
 namespace Drupal\itk_pretix\Pretix;
 
+use Drupal\Core\Database\Connection;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\itk_pretix\Exception\SynchronizeException;
+use Drupal\node\NodeInterface;
+use ItkDev\Pretix\Client\Client;
+use ItkDev\Pretix\Entity\Event;
+use ItkDev\Pretix\Entity\SubEvent;
+
 /**
  * Abstract helper.
  */
 abstract class AbstractHelper {
+  use StringTranslationTrait;
 
   /**
    * The pretix client.
    *
-   * @var \Drupal\itk_pretix\Pretix\Client
+   * @var \ItkDev\Pretix\Client\Client
    */
-  protected $client;
+  protected $pretixClient;
 
   /**
-   * Create an instance of the helper.
+   * The database.
+   *
+   * @var \Drupal\Core\Database\Connection
    */
-  public static function create() {
-    return new static();
+  protected $database;
+
+  /**
+   * Constructor.
+   *
+   * @param \Drupal\Core\Database\Connection $database
+   *   The database.
+   */
+  public function __construct(Connection $database) {
+    $this->database = $database;
   }
 
   /**
    * Set pretix client.
    *
-   * @param \Drupal\itk_pretix\Pretix\Client $client
+   * @param \Drupal\itk_pretix\Pretix\Client $pretixClient
    *   The client.
    *
    * @return \Drupal\itk_pretix\Pretix\AbstractHelper
    *   The helper.
    */
-  public function setClient(Client $client) {
-    $this->client = $client;
+  public function setPretixClient(Client $pretixClient) {
+    $this->pretixClient = $pretixClient;
 
     return $this;
   }
@@ -39,43 +58,40 @@ abstract class AbstractHelper {
   /**
    * Get pretix client.
    *
-   * @param object $node
+   * @param \Drupal\node\NodeInterface $node
    *   The node.
    *
-   * @return \Drupal\itk_pretix\Pretix\Client|null
+   * @return \ItkDev\Pretix\Client\Client
    *   The client if any.
    */
-  public function getPretixClient($node) {
-    $user = entity_metadata_wrapper('user', $node->uid);
+  public function getPretixClient(NodeInterface $node) {
+    if (NULL === $this->pretixClient) {
+      $config = $this->getPretixConfiguration($node);
 
-    if (TRUE === $user->field_pretix_enable->value()) {
-      $info = $this->loadPretixEventInfo($node, TRUE);
-      $data = $info['data'] ?? NULL;
-      // pretix_url and pretix_organizer_slug may have changed on the user, so
-      // we give priority to the values stored in the node event info.
-      $url = $data['pretix_url'] ?? $user->field_pretix_url->value();
-      $organizerSlug = $data['pretix_organizer_slug'] ?? $user->field_pretix_organizer_slug->value();
-      $apiToken = $user->field_pretix_api_token->value();
-
-      return new Client($url, $apiToken, $organizerSlug);
+      $this->pretixClient = new Client([
+        'url' => $config['pretix_url'],
+        'organizer' => $config['organizer_slug'],
+        'api_token' => $config['api_token'],
+      ]);
     }
 
-    return NULL;
+    return $this->pretixClient;
   }
 
   /**
-   * Set pretix client.
+   * Get pretix configuration for a node.
    *
-   * @param object $node
+   * @param \Drupal\node\NodeInterface|null $node
    *   The node.
    *
-   * @return \Drupal\itk_pretix\Pretix\AbstractHelper
-   *   The helper.
+   * @return array
+   *   The configuration.
    */
-  public function setPretixClient($node) {
-    $this->client = $this->getPretixClient($node);
+  public function getPretixConfiguration(NodeInterface $node = NULL) {
+    $config = \Drupal::config('itk_pretix.pretixconfig');
 
-    return $this;
+    // @TODO Handle node, e.g. to get user specific configuration.
+    return $config->get();
   }
 
   /**
@@ -108,7 +124,7 @@ abstract class AbstractHelper {
   /**
    * Load pretix event info from database.
    *
-   * @param object $node
+   * @param \Drupal\node\NodeInterface $node
    *   The node.
    * @param bool $reset
    *   If set, data will be reset (from database).
@@ -116,21 +132,13 @@ abstract class AbstractHelper {
    * @return array|null
    *   The info if any.
    */
-  public function loadPretixEventInfo($node, $reset = FALSE) {
-    if (is_array($node)) {
-      $info = [];
-      foreach ($node as $n) {
-        $info[$n->nid] = $this->loadPretixEventInfo($n, $reset);
-      }
-
-      return $info;
-    }
-
-    $nid = $node->nid;
+  public function loadPretixEventInfo(NodeInterface $node, $reset = FALSE) {
+    $nid = $node->id();
     $info = &drupal_static(__METHOD__, []);
 
     if ($reset || !isset($info[$nid])) {
-      $record = db_select('itk_pretix_events', 'p')
+      $record = $this->database
+        ->select('itk_pretix_events', 'p')
         ->fields('p')
         ->condition('nid', $nid, '=')
         ->execute()
@@ -152,9 +160,9 @@ abstract class AbstractHelper {
   /**
    * Add pretix event.
    *
-   * @param object $node
+   * @param \Drupal\node\NodeInterface $node
    *   The node.
-   * @param object $event
+   * @param \ItkDev\Pretix\Entity\Event $event
    *   The event.
    * @param array $data
    *   The data.
@@ -164,28 +172,28 @@ abstract class AbstractHelper {
    * @return array
    *   The event data.
    *
-   * @throws \InvalidMergeQueryException
+   * @throws \Exception
    */
-  protected function addPretixEventInfo($node, $event, array $data, $reset = FALSE) {
+  protected function addPretixEventInfo(NodeInterface $node, Event $event, array $data, $reset = FALSE) {
     $info = $this->loadPretixEventInfo($node, TRUE);
 
     // The values to store in the database.
     $fields = [];
     if (NULL === $info || $reset) {
-      $user = entity_metadata_wrapper('user', $node->uid);
+      $config = $this->getPretixConfiguration($node);
       $fields = [
-        'nid' => $node->nid,
-        'pretix_organizer_slug' => $user->field_pretix_organizer_slug->value(),
-        'pretix_event_slug' => $event->slug,
+        'nid' => $node->id(),
+        'pretix_organizer_slug' => $config['organizer_slug'],
+        'pretix_event_slug' => $event->getSlug(),
       ];
 
-      $pretixUrl = rtrim($user->field_pretix_url->value(), '/');
+      $pretixUrl = rtrim($config['pretix_url'], '/');
       $data += [
         'pretix_url' => $pretixUrl,
         'pretix_event_url' => $pretixUrl . '/control/event/' . $fields['pretix_organizer_slug'] . '/' . $fields['pretix_event_slug'] . '/',
         'pretix_event_shop_url' => $pretixUrl . '/' . $fields['pretix_organizer_slug'] . '/' . $fields['pretix_event_slug'] . '/',
-        'pretix_organizer_slug' => $user->field_pretix_organizer_slug->value(),
-        'pretix_event_slug' => $event->slug,
+        'pretix_organizer_slug' => $config['organizer_slug'],
+        'pretix_event_slug' => $event->getSlug(),
         'event' => $event,
       ];
     }
@@ -195,8 +203,9 @@ abstract class AbstractHelper {
 
     $fields['data'] = json_encode($data);
 
-    $result = db_merge('itk_pretix_events')
-      ->key(['nid' => $node->nid])
+    $result = $this->database
+      ->merge('itk_pretix_events')
+      ->key(['nid' => $node->id()])
       ->fields($fields)
       ->execute();
 
@@ -208,7 +217,7 @@ abstract class AbstractHelper {
    *
    * @param object|null $item
    *   The item collection item.
-   * @param object|int $subEvent
+   * @param \ItkDev\Pretix\Entity\SubEvent $subEvent
    *   The sub-event (id).
    * @param array $data
    *   The data.
@@ -218,36 +227,33 @@ abstract class AbstractHelper {
    * @return array
    *   The sub-event data.
    *
-   * @throws \InvalidMergeQueryException
+   * @throws \Exception
    */
-  public function addPretixSubEventInfo($item, $subEvent, array $data, $reset = FALSE) {
-    if (NULL === $item && isset($subEvent->event, $subEvent->id)) {
-      $subEventId = $this->getId($subEvent);
-
-      $result = db_select('itk_pretix_subevents', 'p')
+  public function addPretixSubEventInfo($item, SubEvent $subEvent, array $data, $reset = FALSE) {
+    if (NULL === $item && NULL !== $subEvent->getId()) {
+      $result = $this->database
+        ->select('itk_pretix_subevents', 'p')
         ->fields('p')
-        ->condition('pretix_subevent_id', $subEventId, '=')
+        ->condition('pretix_subevent_id', $subEvent->getId(), '=')
         ->execute()
         ->fetch();
 
       $item = $result;
     }
 
-    list($fieldName, $itemId) = $this->getItemKeys($item);
-    $subEventId = $this->getId($subEvent);
+    $subEventId = $subEvent->getId();
 
     $info = $this->loadPretixSubEventInfo($item, TRUE);
     // The values to store in the database.
     $fields = [];
     if (NULL === $info || $reset) {
       $fields = [
-        'field_name' => $fieldName,
-        'item_id' => $itemId,
-        'pretix_subevent_id' => $subEventId,
+        'item_uuid' => $item['uuid'],
+        'pretix_subevent_id' => $subEvent->getId(),
       ];
 
       $data += [
-        'pretix_subevent_id' => $subEventId,
+        'pretix_subevent_id' => $subEvent->getId(),
       ];
     }
 
@@ -255,11 +261,11 @@ abstract class AbstractHelper {
     $data += $info['data'] ?? [];
     $fields['data'] = json_encode($data);
 
-    db_merge('itk_pretix_subevents')
+    $this->database
+      ->merge('itk_pretix_subevents')
       ->key([
-        'field_name' => $fieldName,
-        'item_id' => $itemId,
-        'pretix_subevent_id' => $subEventId,
+        'item_uuid' => $item['uuid'],
+        'pretix_subevent_id' => $subEvent->getId(),
       ])
       ->fields($fields)
       ->execute();
@@ -270,46 +276,36 @@ abstract class AbstractHelper {
   /**
    * Load pretix sub-event info from database.
    *
-   * @param object $item
-   *   The field collection item.
+   * @param array $item
+   *   The date item.
    * @param bool $reset
    *   If set, data will be read from database.
    *
    * @return array|null
    *   The sub-event data.
    */
-  public function loadPretixSubEventInfo($item, $reset = FALSE) {
-    if (is_array($item)) {
-      $info = [];
-      foreach ($item as $i) {
-        $info[$i->item_id] = $this->loadPretixSubEventInfo($i, $reset);
-      }
-
-      return $info;
-    }
-
-    list($fieldName, $itemId) = $this->getItemKeys($item);
+  public function loadPretixSubEventInfo(array $item, bool $reset = FALSE) {
+    $itemId = $item['uuid'];
     $info = &drupal_static(__METHOD__, []);
 
-    if ($reset || !isset($info[$fieldName][$itemId])) {
-      $record = db_select('itk_pretix_subevents', 'p')
+    if ($reset || !isset($info[$itemId])) {
+      $record = $this->database
+        ->select('itk_pretix_subevents', 'p')
         ->fields('p')
-        ->condition('field_name', $fieldName, '=')
-        ->condition('item_id', $itemId, '=')
+        ->condition('item_uuid', $itemId, '=')
         ->execute()
         ->fetch();
 
       if (!empty($record)) {
-        $info[$fieldName][$itemId] = [
-          'field_name' => $record->field_name,
-          'item_id' => (int) $record->item_id,
+        $info[$itemId] = [
+          'item_uuid' => (int) $record->item_uuid,
           'pretix_subevent_id' => (int) $record->pretix_subevent_id,
           'data' => json_decode($record->data, TRUE),
         ];
       }
     }
 
-    return $info[$fieldName][$itemId] ?? NULL;
+    return $info[$itemId] ?? NULL;
   }
 
   /**
@@ -349,97 +345,6 @@ abstract class AbstractHelper {
   }
 
   /**
-   * Get id.
-   *
-   * @param object|scalar $object
-   *   The object or object id.
-   *
-   * @return mixed
-   *   The object id.
-   */
-  private function getId($object) {
-    return $object->id ?? $object;
-  }
-
-  /**
-   * Report error.
-   *
-   * @param string $message
-   *   The message.
-   *
-   * @return array
-   *   The error.
-   */
-  protected function error($message) {
-    watchdog('itk_pretix', 'Error: %message', [
-      '%message' => $message,
-    ], WATCHDOG_ERROR);
-
-    return ['error' => $message];
-  }
-
-  /**
-   * Test if a result is an error.
-   *
-   * @param array $result
-   *   The result.
-   *
-   * @return bool
-   *   True iff the result is an arror.
-   */
-  public function isError(array $result) {
-    return isset($result['error']);
-  }
-
-  /**
-   * Get data from an error.
-   *
-   * @param array $result
-   *   The result.
-   *
-   * @return object|null
-   *   The error data if any.
-   */
-  public function getErrorData(array $result) {
-    return ($this->isError($result) && isset($result['result']->data)) ? $result['result']->data : NULL;
-  }
-
-  /**
-   * Test if an API result is an error.
-   *
-   * @param object $result
-   *   The result.
-   *
-   * @return bool
-   *   True iff the result is an error.
-   */
-  public function isApiError($result) {
-    return isset($result->error);
-  }
-
-  /**
-   * Report API error.
-   *
-   * @param object $result
-   *   The result.
-   * @param string $message
-   *   The message.
-   *
-   * @return array
-   *   The error.
-   */
-  public function apiError($result, $message) {
-    watchdog('itk_pretix', 'Error: %message: %code %error', [
-      '%message' => $message,
-      '%code' => $result->code,
-      '%error' => $result->error ?? NULL,
-      '%data' => $result->data ?? NULL,
-    ], WATCHDOG_ERROR);
-
-    return ['error' => $message, 'result' => $result];
-  }
-
-  /**
    * Get pretix event url.
    *
    * @param object $node
@@ -473,6 +378,14 @@ abstract class AbstractHelper {
     }
 
     return NULL;
+  }
+
+  /**
+   * Handle a pretix api client exception.
+   */
+  protected function clientException(string $message, \Exception $clientException = NULL) {
+    // @TODO Log the exception.
+    return new SynchronizeException($message, 0, $clientException);
   }
 
 }

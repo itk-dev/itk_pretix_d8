@@ -61,6 +61,14 @@ class PretixConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $form['template_event_slugs'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Template events'),
+      '#description' => $this->t('Template event short forms. One per line.'),
+      '#default_value' => $config->get('template_event_slugs'),
+      '#required' => TRUE,
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -74,7 +82,18 @@ class PretixConfigForm extends ConfigFormBase {
       ->set('pretix_url', $form_state->getValue('pretix_url'))
       ->set('organizer_slug', $form_state->getValue('organizer_slug'))
       ->set('api_token', $form_state->getValue('api_token'))
+      ->set('template_event_slugs', $form_state->getValue('template_event_slugs'))
       ->save();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    parent::validateForm($form, $form_state);
+
+    // @TODO Validate pretix credentials.
+    // @TODO Validate template events
   }
 
 }

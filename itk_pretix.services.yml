@@ -3,6 +3,15 @@ services:
     class: Drupal\itk_pretix\NodeHelper
     arguments:
       - '@itk_pretix.event_helper'
+      - '@messenger'
 
   itk_pretix.event_helper:
     class: Drupal\itk_pretix\Pretix\EventHelper
+    arguments:
+      - '@database'
+      - '@itk_pretix.order_helper'
+
+  itk_pretix.order_helper:
+    class: Drupal\itk_pretix\Pretix\OrderHelper
+    arguments:
+      - '@database'

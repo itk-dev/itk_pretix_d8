@@ -2,356 +2,101 @@
 
 namespace Drupal\itk_pretix\Pretix;
 
+use Drupal\Core\Database\Connection;
+use Drupal\itk_pretix\Exception\SynchronizeException;
+use Drupal\node\NodeInterface;
+use ItkDev\Pretix\Client\Client;
+use ItkDev\Pretix\Entity\Event;
+use ItkDev\Pretix\Entity\Quota;
+
 /**
  * Pretix helper.
  */
 class EventHelper extends AbstractHelper {
-
-
-  const PRETIX_CONTENT_TYPES = [
-    'course',
-    'course_educators',
-  ];
+  /**
+   * The order helper.
+   *
+   * @var \Drupal\itk_pretix\Pretix\OrderHelper
+   */
+  private $orderHelper;
 
   /**
-   * The configuration.
+   * Constructor.
    *
-   * @var array
+   * @param \Drupal\Core\Database\Connection $database
+   *   The database.
+   * @param \Drupal\itk_pretix\Pretix\OrderHelper $orderHelper
+   *   The order helper.
    */
-  private $configuration;
-
-  /**
-   * The constructor.
-   *
-   * @param array $configuration
-   *   The configuration.
-   */
-  public function __construct(array $configuration) {
-    $this->configuration = $configuration;
+  public function __construct(Connection $database, OrderHelper $orderHelper) {
+    parent::__construct($database);
+    $this->orderHelper = $orderHelper;
   }
 
   /**
-   * Create an instance of the helper.
+   * Synchronize pretix event with a node.
    */
-  public static function create() {
-    return new static([
-      'pretix_event_slug_template' => '!nid',
-    ]);
-  }
-
-  /**
-   * Validate the the specified event is a valid template event.
-   *
-   * @param string $url
-   *   The url.
-   * @param string $apiToken
-   *   The api token.
-   * @param string $organizerSlug
-   *   The organizer slug.
-   * @param string $eventSlug
-   *   The event slug.
-   *
-   * @return null|array
-   *   If null all is good. Otherwise, returns list of [key, error-message]
-   */
-  public function validateTemplateEvent($url, $apiToken, $organizerSlug, $eventSlug) {
-    $client = new Client($url, $apiToken, $organizerSlug);
-
-    // Check that we can access the pretix API.
-    $result = $client->getApiEndpoints();
-    if (isset($result->error) || 200 !== (int) $result->code) {
-      return [
-        'service_url' => t('Cannot connect to pretix api. Check your pretix url and API token settings.'),
-        'api_token' => t('Cannot connect to pretix api. Check your pretix url and API token settings.'),
-      ];
-    }
-
-    // Check that we can get events.
-    $result = $client->getEvents();
-    if (isset($result->error) || 200 !== (int) $result->code) {
-      return [
-        'organizer_slug' => t('Invalid or inaccessible organizer slug.'),
-      ];
-    }
-
-    // Check that we can get the default event.
-    $result = $client->getEvent($eventSlug);
-    if (empty($eventSlug) || isset($result->error) || 200 !== (int) $result->code) {
-      return [
-        'event_slug' => t('Invalid or inaccessible event slug.'),
-      ];
-    }
-
-    $event = $result->data;
-    if (!$event->has_subevents) {
-      return [
-        'event_slug' => t('This event does not have sub-events.'),
-      ];
-    }
-
-    $result = $client->getSubEvents($event);
-    if (isset($result->error) || 200 !== (int) $result->code) {
-      return [
-        'event_slug' => t('Cannot get sub-events.'),
-      ];
-    }
-
-    $subEvents = $result->data;
-    if (1 !== $subEvents->count) {
-      return [
-        'event_slug' => t('Event must have exactly 1 date.'),
-      ];
-    }
-
-    $subEvent = $subEvents->results[0];
-    $result = $client->getQuotas($event, ['subevent' => $subEvent->id]);
-
-    if (isset($result->error) || 200 !== (int) $result->code) {
-      return [
-        'event_slug' => t('Cannot get sub-event quotas.'),
-      ];
-    }
-
-    $quotas = $result->data;
-    if (1 !== $quotas->count) {
-      return [
-        'event_slug' => t('Date must have exactly 1 quota.'),
-      ];
-    }
-
-    $quota = $quotas->results[0];
-    if (1 !== count($quota->items)) {
-      return [
-        'event_slug' => t('Event date (sub-event) quota must apply to exactly 1 product.'),
-      ];
-    }
-
-    return NULL;
-  }
-
-  /**
-   * Check if user has pretix events.
-   *
-   * @param object $user
-   *   The user.
-   *
-   * @return bool
-   *   True if user has pretix events.
-   */
-  public function userHasPretixEvents($user) {
-    $result = db_query('SELECT count(*) FROM {node} n JOIN {itk_pretix_events} e ON n.nid = e.nid WHERE n.uid = :uid', ['uid' => $user->uid]);
-
-    return 0 !== (int) $result->fetchField();
-  }
-
-  /**
-   * Ensure that the pretix callback webhook exists.
-   *
-   * @param string $url
-   *   The url.
-   * @param string $apiToken
-   *   The api token.
-   * @param string $organizerSlug
-   *   The organizer slug.
-   *
-   * @return object
-   *   The result from calling the pretix api.
-   */
-  public function ensureWebhook($url, $apiToken, $organizerSlug) {
-    $client = new Client($url, $apiToken, $organizerSlug);
-
-    $targetUrl = url('itk_pretix/pretix/webhook/' . $organizerSlug, ['absolute' => TRUE]);
-    $existingWebhook = NULL;
-
-    $webhooks = $client->getWebhooks($organizerSlug);
-    if (isset($webhooks->data->results)) {
-      foreach ($webhooks->data->results as $webhook) {
-        if ($targetUrl === $webhook->target_url) {
-          $existingWebhook = $webhook;
-          break;
-        }
-      }
-    }
-
-    $actionTypes = [
-      OrderHelper::PRETIX_EVENT_ORDER_PLACED,
-      OrderHelper::PRETIX_EVENT_ORDER_PLACED_REQUIRE_APPROVAL,
-      OrderHelper::PRETIX_EVENT_ORDER_PAID,
-      OrderHelper::PRETIX_EVENT_ORDER_CANCELED,
-      OrderHelper::PRETIX_EVENT_ORDER_EXPIRED,
-      OrderHelper::PRETIX_EVENT_ORDER_MODIFIED,
-      OrderHelper::PRETIX_EVENT_ORDER_CONTACT_CHANGED,
-      OrderHelper::PRETIX_EVENT_ORDER_CHANGED,
-      OrderHelper::PRETIX_EVENT_ORDER_REFUND_CREATED_EXTERNALLY,
-      OrderHelper::PRETIX_EVENT_ORDER_APPROVED,
-      OrderHelper::PRETIX_EVENT_ORDER_DENIED,
-      OrderHelper::PRETIX_EVENT_CHECKIN,
-      OrderHelper::PRETIX_EVENT_CHECKIN_REVERTED,
-    ];
-
-    $webhookSettings = [
-      'target_url' => $targetUrl,
-      'enabled' => TRUE,
-      'all_events' => TRUE,
-      'limit_events' => [],
-      'action_types' => $actionTypes,
-    ];
-
-    $result = NULL === $existingWebhook
-      ? $client->createWebhook($webhookSettings)
-      : $client->updateWebhook($existingWebhook, $webhookSettings);
-
-    return $result;
-  }
-
-  /**
-   * Check if a node is a pretix node.
-   *
-   * @param object $node
-   *   The node.
-   *
-   * @return bool
-   *   True iff the node is a pretix event node.
-   */
-  public function isPretixEventNode($node) {
-    $type = $node->type ?? $node;
-
-    if (!in_array($type, self::PRETIX_CONTENT_TYPES, TRUE)) {
-      return FALSE;
-    }
-
-    // Node is a pretix node, but its creating user must also have a pretix
-    // connection.
-    return $this->isPretixUser($node->uid);
-  }
-
-  /**
-   * Check if a user is a pretix user, i.e. has a connection to pretix.
-   *
-   * @param object|int $user
-   *   The user or user id.
-   *
-   * @return bool
-   *   True if the user has a defined pretix connection.
-   */
-  public function isPretixUser($user) {
-    $user = entity_metadata_wrapper('user', $user);
-
-    return $user->field_pretix_enable->value()
-      && $user->field_pretix_url->value()
-      && $user->field_pretix_api_token->value()
-      && $user->field_pretix_organizer_slug->value()
-      && $user->field_pretix_default_event_slug->value();
-  }
-
-  /**
-   * Set pretix event info on a single node or a list of nodes.
-   *
-   * @param object|array $node
-   *   A single node or a list of nodes.
-   */
-  public function setPretixEventInfo($node) {
-    $info = $this->loadPretixEventInfo($node);
-    if (!empty($info)) {
-      if (is_array($node)) {
-        foreach ($info as $nid => $data) {
-          $node[$nid]->pretix = $data;
-        }
-      }
-      else {
-        $node->pretix = $info;
-      }
-    }
-  }
-
-  /**
-   * Update (or create) pretix event based on node.
-   *
-   * @param object $node
-   *   The node.
-   *
-   * @return array
-   *   The status or an error.
-   *
-   * @throws \InvalidMergeQueryException
-   */
-  public function syncronizePretixEvent($node) {
-    $info = $this->loadPretixEventInfo($node);
-    $wrapper = entity_metadata_wrapper('node', $node);
-    $user = entity_metadata_wrapper('user', $node->uid);
+  public function syncronizePretixEvent(NodeInterface $node, array $options) {
     $client = $this->getPretixClient($node);
+
+    $info = $this->loadPretixEventInfo($node);
     $isNewEvent = NULL === $info;
 
-    if (NULL === $client) {
-      return $this->error('Cannot get client');
+    $dates = $options['dates'] ?? NULL;
+    $settings = $options['settings'] ?? NULL;
+
+    if (empty($dates)) {
+      throw new SynchronizeException($this->t('No dates specified'));
     }
 
-    // Only update new events and events that are syncrhonized with pretix.
-    if ($isNewEvent || TRUE === $wrapper->field_pretix_synchronize->value()) {
-      $startDate = NULL;
-      $items = $wrapper->field_pretix_date->value();
-      foreach ($items as $item) {
-        $item = entity_metadata_wrapper('field_collection_item', $item);
-        if ($item->field_pretix_start_date->value()) {
-          if (NULL === $startDate || $item->field_pretix_start_date->value() < $startDate) {
-            $startDate = $item->field_pretix_start_date->value();
-          }
-        }
+    if (!isset($settings['template_event'])) {
+      throw new SynchronizeException($this->t('No template event specified'));
+    }
+    $templateEventSlug = $settings['template_event'];
+
+    $name = $this->getEventName($node);
+    $location = $this->getEventLocation($node);
+    $startDate = reset($dates)['time_from'];
+
+    // @TODO Handle locales?
+    $data = [
+      'name' => ['en' => $name],
+      'currency' => 'DKK',
+      'date_from' => $this->formatDate($startDate),
+      'is_public' => $node->isPublished(),
+      'location' => ['en' => $location],
+    ];
+
+    $eventData = [];
+    if ($isNewEvent) {
+      $data['slug'] = $this->getEventSlug($node);
+      // has_subevents is not cloned from source event.
+      $data['has_subevents'] = TRUE;
+      try {
+        $event = $client->cloneEvent($templateEventSlug, $data);
       }
-
-      if (NULL === $startDate) {
-        return $this->error('Cannot get start date for event. pretix event not created.');
+      catch (\Exception $exception) {
+        throw new SynchronizeException($this->t('Cannot clone event'), 0, $exception);
       }
-
-      $name = $this->getEventName($node);
-      $location = $this->getEventLocation($node);
-
-      $data = [
-        'name' => ['en' => $name],
-        'currency' => 'DKK',
-        'date_from' => $this->formatDate($startDate),
-        'is_public' => $node->status,
-        'location' => ['en' => $location],
-      ];
-
-      $eventData = [];
-      if ($isNewEvent) {
-        $data['slug'] = $this->getEventSlug($node);
-        // has_subevents is not cloned from source event.
-        $data['has_subevents'] = TRUE;
-        $templateEventSlug = $user->field_pretix_default_event_slug->value();
-        $result = $client->cloneEvent($templateEventSlug, $data);
-        if (isset($result->error)) {
-          return $this->apiError($result, 'Cannot clone event');
-        }
-        $eventData['template_event_slug'] = $templateEventSlug;
+      $eventData['template_event_slug'] = $templateEventSlug;
+    }
+    else {
+      try {
+        $event = $client->updateEvent($info['pretix_event_slug'], $data);
       }
-      else {
-        $result = $client->updateEvent($info['pretix_event_slug'], $data);
-        if (isset($result->error)) {
-          return $this->apiError($result, 'Cannot update event');
-        }
-      }
-
-      $event = $result->data;
-      $eventData['event'] = $event;
-      $info = $this->addPretixEventInfo($node, $event, $eventData);
-      $subEvents = $this->synchronizePretixSubEvents($event, $node, $client);
-
-      foreach ($subEvents as $subEvent) {
-        if (isset($subEvent['error'])) {
-          return $subEvent;
-        }
+      catch (\Exception $exception) {
+        throw new SynchronizeException($this->t('Cannot update event'), 0, $exception);
       }
     }
 
-    // Get the event even if it's not syncronized with pretix.
-    if (!isset($event) && TRUE !== $wrapper->field_pretix_synchronize->value()) {
-      $result = $client->getEvent($info['pretix_event_slug']);
-      if (isset($result->error)) {
-        return $this->apiError($result, 'Cannot get event');
+    $eventData['event'] = $event->toArray();
+    $info = $this->addPretixEventInfo($node, $event, $eventData);
+    $subEvents = $this->synchronizePretixSubEvents($event, $node, $dates, $client);
+
+    foreach ($subEvents as $subEvent) {
+      if (isset($subEvent['error'])) {
+        return $subEvent;
       }
-      $event = $result->data;
     }
 
     return [
@@ -362,160 +107,27 @@ class EventHelper extends AbstractHelper {
   }
 
   /**
-   * Set event live (or not) in pretix.
-   *
-   * @param object $node
-   *   The node.
-   * @param bool $live
-   *   The live-ness of the node's event.
-   *
-   * @return array
-   *   The event info.
-   *
-   * @throws \InvalidMergeQueryException
-   */
-  public function setEventLive($node, $live) {
-    // Note: 'live' is updated for all events including the ones that are not
-    // syncronized with pretix.
-    $info = $this->loadPretixEventInfo($node);
-    $client = $this->getPretixClient($node);
-    $result = $client->getEvent($info['pretix_event_slug']);
-    if ($this->isApiError($result)) {
-      return $this->apiError($result, 'Cannot get event');
-    }
-    $event = $result->data;
-
-    $result = $client->updateEvent($event->slug, ['live' => $live]);
-    if ($this->isApiError($result)) {
-      return $this->apiError($result, $live ? 'Cannot set pretix event live' : 'Cannot set pretix event not live');
-    }
-    $event = $result->data;
-    $info = $this->addPretixEventInfo($node, $event, ['event' => $event]);
-
-    return [
-      'status' => $live ? 'live' : 'not live',
-      'info' => $info,
-    ];
-  }
-
-  /**
-   * Delete event.
-   *
-   * @param object $node
-   *   The node.
-   *
-   * @return array
-   *   The result.
-   */
-  public function deletePretixEvent($node) {
-    $info = $this->loadPretixEventInfo($node);
-    if (NULL !== $info) {
-      $client = $this->getPretixClient($node);
-      $result = $client->deleteEvent($info['pretix_event_slug']);
-      if (isset($result->error)) {
-        return $this->apiError($result, 'Cannot delete event');
-      }
-
-      return [
-        'status' => 'deleted',
-        'info' => $info,
-      ];
-    }
-
-    return [
-      'error' => 'Cannot delete event in pretix',
-    ];
-  }
-
-  /**
-   * Get pretix template event url for a user.
-   *
-   * @param object|int $user
-   *   The user or user id.
-   * @param string $path
-   *   An optional url path.
-   *
-   * @return string|null
-   *   The pretix template url if any.
-   */
-  public function getPretixTemplateEventUrl($user, $path = '') {
-    $user = entity_metadata_wrapper('user', $user);
-    if (TRUE === $user->field_pretix_enable->value()) {
-      $url = rtrim($user->field_pretix_url->value(), '/');
-      $organizerSlug = $user->field_pretix_organizer_slug->value();
-      $eventSlug = $user->field_pretix_default_event_slug->value();
-
-      if (isset($url, $organizerSlug, $eventSlug)) {
-        return $url . '/control/event/' . $organizerSlug . '/' . $eventSlug . '/' . $path;
-      }
-    }
-
-    return NULL;
-  }
-
-  /**
-   * Get pretix event slug.
-   *
-   * @param object $node
-   *   The node.
-   *
-   * @return string
-   *   The event slug.
-   */
-  private function getEventSlug($node) {
-    $template = $this->configuration['pretix_event_slug_template'] ?? '!nid';
-
-    return str_replace(['!nid'], [$node->nid], $template);
-  }
-
-  /**
-   * Get event name from a node.
-   *
-   * @param object $node
-   *   The node.
-   *
-   * @return string
-   *   The event name.
-   */
-  private function getEventName($node) {
-    return $node->title;
-  }
-
-  /**
-   * Get event location.
-   *
-   * @param object $node
-   *   The node.
-   *
-   * @return string
-   *   The event location.
-   */
-  private function getEventLocation($node) {
-    return '';
-  }
-
-  /**
    * Synchronize pretix sub-events.
    *
-   * @param object $event
+   * @param \ItkDev\Pretix\Entity\Event $event
    *   The event.
-   * @param object $node
+   * @param \Drupal\node\NodeInterface $node
    *   The node.
-   * @param \Drupal\itk_pretix\Pretix\Client $client
+   * @param array $dates
+   *   The dates.
+   * @param \ItkDev\Pretix\Client\Client $client
    *   The client.
    *
    * @return array
    *   The sub-event info.
    *
-   * @throws \InvalidMergeQueryException
+   * @throws \Exception
    */
-  public function synchronizePretixSubEvents($event, $node, Client $client) {
+  public function synchronizePretixSubEvents(Event $event, NodeInterface $node, array $dates, Client $client) {
     $info = [];
-    $wrapper = entity_metadata_wrapper('node', $node);
-    $items = $wrapper->field_pretix_date->value();
     $subEventIds = [];
-    foreach ($items as $item) {
-      $result = $this->synchronizePretixSubEvent($item, $event, $node, $client);
+    foreach ($dates as $date) {
+      $result = $this->synchronizePretixSubEvent($date, $event, $node, $client);
       if (isset($result['info'])) {
         $subEventIds[] = $result['info']['pretix_subevent_id'];
       }
@@ -530,14 +142,17 @@ class EventHelper extends AbstractHelper {
 
     // Delete pretix sub-events that no longer exist in Drupal.
     $pretixSubEventIds = [];
-    $result = $client->getSubEvents($event);
-    if (isset($result->data->results)) {
-      foreach ($result->data->results as $subEvent) {
-        if (!in_array($subEvent->id, $subEventIds, TRUE)) {
+    try {
+      $subEvents = $client->getSubEvents($event);
+      foreach ($subEvents as $subEvent) {
+        if (!in_array($subEvent->getId(), $subEventIds, TRUE)) {
           $client->deleteSubEvent($event, $subEvent);
         }
-        $pretixSubEventIds[] = $subEvent->id;
+        $pretixSubEventIds[] = $subEvent->getId();
       }
+    }
+    catch (\Exception $exception) {
+      // @TODO Do something clever here.
     }
 
     // @TODO Clean up info on pretix sub-events.
@@ -545,140 +160,62 @@ class EventHelper extends AbstractHelper {
   }
 
   /**
-   * Update event availability for a node.
-   *
-   * @param object $node
-   *   The node.
-   *
-   * @return array|null
-   *   On success, the event info. Otherwise an error.
-   *
-   * @throws \InvalidMergeQueryException
-   */
-  public function updateEventAvailability($node) {
-    $client = $this->getPretixClient($node);
-    if (isset($node->pretix['pretix_event_slug'])) {
-      $eventSlug = $node->pretix['pretix_event_slug'];
-      $result = $client->getEvent($eventSlug);
-      if ($this->isApiError($result)) {
-        return $this->apiError($result, 'Cannot get event');
-      }
-      $event = $result->data;
-
-      $result = $client->getQuotas($event);
-      if ($this->isApiError($result)) {
-        return $this->apiError($result, 'Cannot get quotas');
-      }
-      $quotas = $result->data->results;
-
-      foreach ($quotas as $quota) {
-        $result = $client->getQuotaAvailability($event, $quota);
-        if ($this->isApiError($result)) {
-          return $this->apiError($result, 'Cannot get quota availability');
-        }
-        $quota->availability = $result->data;
-      }
-
-      $info = $this->addPretixEventInfo($node, $event, ['quotas' => $quotas]);
-      $this->setEventAvailability($node, $event);
-
-      return $info;
-    }
-
-    return NULL;
-  }
-
-  /**
-   * Set event availability for on a node.
-   *
-   * @param object $node
-   *   The node.
-   * @param object $event
-   *   The event.
-   *
-   * @throws \InvalidMergeQueryException
-   */
-  private function setEventAvailability($node, $event) {
-    $info = $this->loadPretixEventInfo($node, TRUE);
-    if (isset($info['data']['quotas'])) {
-      $available = FALSE;
-      foreach ($info['data']['quotas'] as $quota) {
-        if (isset($quota['availability']['available']) && TRUE === $quota['availability']['available']) {
-          $available = TRUE;
-          break;
-        }
-      }
-
-      if (!isset($info['available']) || $info['available'] !== $available) {
-        $this->addPretixEventInfo($node, $event, ['available' => $available]);
-        // Flush cache for node.
-        $cid = url('node/' . $node->nid, ['absolute' => TRUE]);
-        cache_clear_all($cid, 'cache_page');
-        // Re-index the node in the 'courses' index.
-        if (module_exists('search_api')) {
-          $index = search_api_index_load('courses');
-          if (NULL !== $index) {
-
-            $events = $this->getSharedEvents($node->nid);
-            $events[] = $node->id;
-
-            search_api_track_item_change('node', $events);
-            // search_api_index_items($index);
-          }
-        }
-      }
-    }
-  }
-
-  /**
    * Synchronize pretix sub-event.
    *
    * @param object $item
    *   The item.
-   * @param object $event
+   * @param \ItkDev\Pretix\Entity\Event $event
    *   The event.
-   * @param object $node
+   * @param \Drupal\node\NodeInterface $node
    *   The node.
-   * @param \Drupal\itk_pretix\Pretix\Client $client
+   * @param \ItkDev\Pretix\Client\Client $client
    *   The client.
    *
    * @return array
    *   On success, the sub-event info. Otherwise an error.
    *
-   * @throws \InvalidMergeQueryException
+   * @throws \Exception
    */
-  private function synchronizePretixSubEvent($item, $event, $node, Client $client) {
-    $item = entity_metadata_wrapper('field_collection_item', $item);
+  private function synchronizePretixSubEvent($item, Event $event, NodeInterface $node, Client $client) {
     $itemInfo = $this->loadPretixSubEventInfo($item, TRUE);
     $isNewItem = NULL === $itemInfo;
 
     $templateEvent = $this->getPretixTemplateEventSlug($node);
-    $result = $client->getSubEvents($templateEvent);
-    if (isset($result->error) || 0 === $result->data->count) {
-      return $this->apiError($result, 'Cannot get template event sub-event');
+    try {
+      $templateSubEvents = $client->getSubEvents($templateEvent);
     }
-    $templateSubEvent = $result->data->results[0];
+    catch (\Exception $exception) {
+      throw $this->clientException($this->t('Cannot get template event sub-events'), $exception->getCode(), $exception);
+    }
+    if (0 === $templateSubEvents->count()) {
+      throw $this->clientException($this->t('Cannot get template event sub-events'));
+    }
+    $templateSubEvent = $templateSubEvents->first();
 
     $product = NULL;
     $data = [];
     if ($isNewItem) {
       // Get first sub-event from template event.
-      $result = $client->getItems($event);
-      if (isset($result->error) || 0 === $result->data->count) {
-        return $this->apiError($result, 'Cannot get template event items');
+      try {
+        $items = $client->getItems($event);
+      }
+      catch (\Exception $exception) {
+        throw $this->clientException($this->t('Cannot get template event items'), $exception);
+      }
+      if (0 === $items->count()) {
+        throw $this->clientException($this->t('Missing items on template event'));
       }
 
       // Always use the first product.
-      $product = $result->data->results[0];
+      $product = $items->first();
 
-      // Convert template sub-event to array.
-      $data = json_decode(json_encode($templateSubEvent), TRUE);
+      $data = $templateSubEvent->toArray();
       // Remove the template id.
       unset($data['id']);
 
       $data['item_price_overrides'] = [
         [
-          'item' => $product->id,
+          'item' => $product->getId(),
         ],
       ];
     }
@@ -687,17 +224,17 @@ class EventHelper extends AbstractHelper {
     }
 
     $data['name'] = ['en' => $this->getEventName($node)];
-    $data['date_from'] = $this->formatDate($item->field_pretix_start_date->value());
-    $data['presale_start'] = $this->formatDate($item->field_pretix_presale->value());
+    $data['date_from'] = $this->formatDate($item['time_from']);
+    $data['date_to'] = $this->formatDate($item['time_to']);
     $data['location'] = NULL;
     $data['active'] = TRUE;
     $data['is_public'] = TRUE;
-    $data['date_to'] = NULL;
     $data['date_admission'] = NULL;
     $data['presale_end'] = NULL;
     $data['seating_plan'] = NULL;
     $data['seat_category_mapping'] = (object) [];
-    $price = TRUE === $item->field_pretix_free->value() ? 0 : (float) $item->field_pretix_price->value();
+    // @TODO Handle prices.
+    $price = 0;
 
     $data['item_price_overrides'][0]['price'] = $price;
 
@@ -705,75 +242,177 @@ class EventHelper extends AbstractHelper {
     $data['meta_data'] = (object) [];
     $subEventData = [];
     if ($isNewItem) {
-      $result = $client->createSubEvent($event->slug, $data);
-      if (isset($result->error)) {
-        return $this->apiError($result, 'Cannot create sub-event');
+      try {
+        $subEvent = $client->createSubEvent($event, $data);
+      }
+      catch (\Exception $exception) {
+        throw $this->clientException($this->t('Cannot create sub-event'), $exception);
       }
     }
     else {
       $subEventId = $itemInfo['pretix_subevent_id'];
-      $result = $client->updateSubEvent($event->slug, $subEventId, $data);
-      if (isset($result->error)) {
-        return $this->apiError($result, 'Cannot update sub-event');
+      try {
+        $subEvent = $client->updateSubEvent($event, $subEventId, $data);
+      }
+      catch (\Exception $exception) {
+        throw $this->clientException($this->t('Cannot update sub-event'), $exception);
       }
     }
-
-    $subEvent = $result->data;
 
     // Get sub-event quotas.
-    $result = $client->getQuotas($event, ['query' => ['subevent' => $subEvent->id]]);
-    if (isset($result->error)) {
-      return $this->apiError($result, 'Cannot get sub-event quotas');
+    try {
+      $quotas = $client->getQuotas($event,
+        ['query' => ['subevent' => $subEvent->getId()]]);
+    }
+    catch (\Exception $exception) {
+      throw $this->clientException($this->t('Cannot get sub-event quotas'), $exception);
     }
 
-    if (0 === $result->data->count) {
+    if (0 === $quotas->count()) {
       // Create a new quota for the sub-event.
-      $result = $client->getQuotas(
-        $templateEvent,
-        ['subevent' => $templateSubEvent->id]
-      );
-      if (isset($result->error) || 0 === $result->data->count) {
-        return $this->apiError($result, 'Cannot get template sub-event quotas');
+      try {
+        $templateQuotas = $client->getQuotas(
+          $templateEvent,
+          ['subevent' => $templateSubEvent->getId()]
+        );
+      }
+      catch (\Exception $exception) {
+        throw $this->clientException($this->t('Cannot get template sub-event quotas'), $exception);
+      }
+      if (0 === $templateQuotas->count()) {
+        throw $this->clientException($this->t('Missing sub-event quotas on template'));
       }
 
-      $templateQuota = $result->data->results[0];
-      unset($templateQuota->id, $templateQuota->subevent);
-      $data = (array) $templateQuota;
-      $data['subevent'] = $subEvent->id;
-      $data['items'] = [$product->id];
-      $result = $client->createQuota($event, $data);
-      if (isset($result->error)) {
-        return $this->apiError($result, 'Cannot create quota for sub-event');
+      $quotaData = $templateQuotas->first()->toArray();
+      unset($quotaData['id']);
+      $quotaData = array_merge($quotaData, [
+        'subevent' => $subEvent->getId(),
+        'items' => [$product->getId()],
+        'size' => (int) $item['spots'],
+      ]);
+      try {
+        $quota = $client->createQuota($event, $quotaData);
       }
-    }
-
-    // Update the quota.
-    $result = $client->getQuotas($event, ['query' => ['subevent' => $subEvent->id]]);
-    if (isset($result->error) || 1 !== $result->data->count) {
-      return $this->apiError($result, 'Cannot get sub-event quota');
-    }
-
-    $quota = $result->data->results[0];
-
-    $size = (int) $item->field_pretix_spaces->value();
-    $data = ['size' => $size];
-    $result = $client->updateQuota($event, $quota, $data);
-    if (isset($result->error)) {
-      return $this->apiError($result, 'Cannot update sub-event quota');
+      catch (\Exception $exception) {
+        throw $this->clientException($this->t('Cannot create quota for sub-event'), $exception);
+      }
     }
 
     $subEventData['subevent'] = $subEvent;
-    $orderHelper = OrderHelper::create()->setClient($client);
-    $availability = $orderHelper->getSubEventAvailability($subEvent);
-    if (!$this->isApiError($result)) {
-      $subEventData['availability'] = $availability->data->results;
+    try {
+      $availabilities = $this->orderHelper
+        ->setPretixClient($client)
+        ->getSubEventAvailabilities($subEvent);
+      $subEventData['availability'] = $availabilities->map(static function (Quota $quota) {
+        return $quota->toArray();
+      })->toArray();
     }
+    catch (\Exception $exception) {
+      $exception->getCode();
+    }
+
     $info = $this->addPretixSubEventInfo($item, $subEvent, $subEventData);
 
     return [
       'status' => $isNewItem ? 'created' : 'updated',
       'info' => $info,
     ];
+  }
+
+  /**
+   * Set event live (or not) in pretix.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   * @param bool $live
+   *   The live-ness of the node's event.
+   *
+   * @return array
+   *   The event info.
+   *
+   * @throws \InvalidMergeQueryException
+   */
+  public function setEventLive(NodeInterface $node, bool $live) {
+    // Note: 'live' is updated for all events including the ones that are not
+    // synchronized with pretix.
+    $info = $this->loadPretixEventInfo($node);
+    $client = $this->getPretixClient($node);
+    try {
+      $event = $client->getEvent($info['pretix_event_slug']);
+    }
+    catch (\Exception $exception) {
+      throw $this->clientException($this->t('Cannot get event'), $exception);
+    }
+
+    try {
+      $event = $client->updateEvent($event, ['live' => $live]);
+    }
+    catch (\Exception $exception) {
+      throw $this->clientException($live ? $this->t('Cannot set pretix event live') : $this->t('Cannot set pretix event not live'), $exception);
+    }
+
+    $info = $this->addPretixEventInfo($node, $event, ['event' => $event->toArray()]);
+
+    return [
+      'status' => $live ? 'live' : 'not live',
+      'info' => $info,
+    ];
+  }
+
+  /**
+   * Get pretix template event slug.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   *
+   * @return string|null
+   *   The template event slug if any.
+   */
+  private function getPretixTemplateEventSlug(NodeInterface $node) {
+    $info = $this->loadPretixEventInfo($node);
+
+    return $info['data']['template_event_slug'] ?? NULL;
+  }
+
+  /**
+   * Get pretix event slug.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   *
+   * @return string
+   *   The event slug.
+   */
+  private function getEventSlug(NodeInterface $node) {
+    $template = $this->configuration['pretix_event_slug_template'] ?? '!nid';
+
+    return str_replace(['!nid'], [$node->id()], $template);
+  }
+
+  /**
+   * Get event name from a node.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   *
+   * @return string
+   *   The event name.
+   */
+  private function getEventName(NodeInterface $node) {
+    return $node->getTitle();
+  }
+
+  /**
+   * Get event location.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   *
+   * @return string
+   *   The event location.
+   */
+  private function getEventLocation(NodeInterface $node) {
+    return '';
   }
 
   /**
@@ -822,55 +461,6 @@ class EventHelper extends AbstractHelper {
     }
 
     return $date->format(\DateTime::ATOM);
-  }
-
-  /**
-   * Get pretix template event slug.
-   *
-   * @param object $node
-   *   The node.
-   *
-   * @return string|null
-   *   The template event slug if any.
-   */
-  private function getPretixTemplateEventSlug($node) {
-    $info = $this->loadPretixEventInfo($node);
-
-    return $info['data']['template_event_slug'] ?? NULL;
-  }
-
-  /**
-   * Get an organizer (user) by slug.
-   *
-   * @param string $organizerSlug
-   *   The organizer slug.
-   *
-   * @return bool|object
-   *   The organizer if found.
-   */
-  public function getOrganizer($organizerSlug) {
-    $query = new \EntityFieldQuery();
-    $query->entityCondition('entity_type', 'user')
-      ->fieldCondition('field_pretix_organizer_slug', 'value', $organizerSlug, '=');
-    $results = $query->execute();
-
-    if (isset($results['user'])) {
-      $uids = array_keys($results['user']);
-      $uid = reset($uids);
-
-      return user_load($uid);
-    }
-
-    return NULL;
-  }
-
-  /**
-   * Doc comment is empty.
-   */
-  public static function getSharedEvents($id) {
-    $query = db_query('SELECT entity_id FROM {field_data_field_pretix_show_widget_from} WHERE field_pretix_show_widget_from_target_id = :id', ['id' => $id]);
-    $result = $query->fetchAllKeyed(0, 0);
-    return array_values($result);
   }
 
 }
