@@ -55,7 +55,8 @@ class EventHelper extends AbstractHelper {
     $templateEventSlug = $settings['template_event'];
 
     $name = $this->getEventName($node);
-    $location = $this->getEventLocation($node);
+    // Get location from first date.
+    $location = $this->getLocation(reset($dates));
     $startDate = reset($dates)['time_from'];
 
     // @TODO Handle locales?
@@ -223,19 +224,29 @@ class EventHelper extends AbstractHelper {
       $data = $itemInfo['data']['subevent'];
     }
 
-    $data['name'] = ['en' => $this->getEventName($node)];
-    $data['date_from'] = $this->formatDate($item['time_from']);
-    $data['date_to'] = $this->formatDate($item['time_to']);
-    $data['location'] = NULL;
-    $data['active'] = TRUE;
-    $data['is_public'] = TRUE;
-    $data['date_admission'] = NULL;
-    $data['presale_end'] = NULL;
-    $data['seating_plan'] = NULL;
-    $data['seat_category_mapping'] = (object) [];
+    $location = $this->getLocation($item);
+    // @TODO Handle geo location.
+    $geoLat = NULL;
+    $geoLng = NULL;
+
+    // @TODO Handle locales.
+    $data = array_merge($data, [
+      'name' => ['en' => $this->getEventName($node)],
+      'date_from' => $this->formatDate($item['time_from']),
+      'date_to' => $this->formatDate($item['time_to']),
+      'location' => ['en' => $location],
+      'geo_lat' => $geoLat,
+      'get_lng' => $geoLng,
+      'active' => TRUE,
+      'is_public' => TRUE,
+      'date_admission' => NULL,
+      'presale_end' => NULL,
+      'seating_plan' => NULL,
+      'seat_category_mapping' => (object) [],
+    ]);
+
     // @TODO Handle prices.
     $price = 0;
-
     $data['item_price_overrides'][0]['price'] = $price;
 
     // Important: meta_data value must be an object!
@@ -403,16 +414,23 @@ class EventHelper extends AbstractHelper {
   }
 
   /**
-   * Get event location.
+   * Get item location.
    *
-   * @param \Drupal\node\NodeInterface $node
-   *   The node.
+   * @param array|null $item
+   *   The item.
    *
    * @return string
    *   The event location.
    */
-  private function getEventLocation(NodeInterface $node) {
-    return '';
+  private function getLocation(array $item = NULL) {
+    if (NULL === $item) {
+      return NULL;
+    }
+
+    return implode(PHP_EOL, array_filter([
+      $item['location'] ?? NULL,
+      $item['address'] ?? NULL,
+    ]));
   }
 
   /**
