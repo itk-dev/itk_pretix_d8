@@ -266,12 +266,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/itk-dev/pretix-api-client-php.git",
-                "reference": "8883c3a68e5995c62973f7124d8a7f028db51ea4"
+                "reference": "ddb3378214e531368f41fdf526648f97dde39a77"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/itk-dev/pretix-api-client-php/zipball/8883c3a68e5995c62973f7124d8a7f028db51ea4",
-                "reference": "8883c3a68e5995c62973f7124d8a7f028db51ea4",
+                "url": "https://api.github.com/repos/itk-dev/pretix-api-client-php/zipball/ddb3378214e531368f41fdf526648f97dde39a77",
+                "reference": "ddb3378214e531368f41fdf526648f97dde39a77",
                 "shasum": ""
             },
             "require": {
@@ -288,7 +288,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "ItkDev\\Pretix\\": "src/"
+                    "ItkDev\\Pretix\\Api\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -302,7 +302,7 @@
                 }
             ],
             "description": "PHP client for pretix api",
-            "time": "2020-02-25T16:25:56+00:00"
+            "time": "2020-02-26T19:30:04+00:00"
         },
         {
             "name": "psr/http-message",

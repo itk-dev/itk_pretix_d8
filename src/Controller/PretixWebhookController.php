@@ -4,7 +4,7 @@ namespace Drupal\itk_pretix\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\itk_pretix\Pretix\OrderHelper;
-use ItkDev\Pretix\Entity\Quota;
+use ItkDev\Pretix\Api\Entity\Quota;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;

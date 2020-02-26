@@ -5,9 +5,9 @@ namespace Drupal\itk_pretix\Pretix;
 use Drupal\Core\Database\Connection;
 use Drupal\itk_pretix\Exception\SynchronizeException;
 use Drupal\node\NodeInterface;
-use ItkDev\Pretix\Client\Client;
-use ItkDev\Pretix\Entity\Event;
-use ItkDev\Pretix\Entity\Quota;
+use ItkDev\Pretix\Api\Client;
+use ItkDev\Pretix\Api\Entity\Event;
+use ItkDev\Pretix\Api\Entity\Quota;
 
 /**
  * Pretix helper.
@@ -110,13 +110,13 @@ class EventHelper extends AbstractHelper {
   /**
    * Synchronize pretix sub-events.
    *
-   * @param \ItkDev\Pretix\Entity\Event $event
+   * @param \ItkDev\Pretix\Api\Entity\Event $event
    *   The event.
    * @param \Drupal\node\NodeInterface $node
    *   The node.
    * @param array $dates
    *   The dates.
-   * @param \ItkDev\Pretix\Client\Client $client
+   * @param \ItkDev\Pretix\Api\Client $client
    *   The client.
    *
    * @return array
@@ -165,11 +165,11 @@ class EventHelper extends AbstractHelper {
    *
    * @param object $item
    *   The item.
-   * @param \ItkDev\Pretix\Entity\Event $event
+   * @param \ItkDev\Pretix\Api\Entity\Event $event
    *   The event.
    * @param \Drupal\node\NodeInterface $node
    *   The node.
-   * @param \ItkDev\Pretix\Client\Client $client
+   * @param \ItkDev\Pretix\Api\Client $client
    *   The client.
    *
    * @return array
@@ -423,7 +423,7 @@ class EventHelper extends AbstractHelper {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node.
-   * @param \ItkDev\Pretix\Entity\Event $event
+   * @param \ItkDev\Pretix\Api\Entity\Event $event
    *   The event.
    *
    * @throws \Exception

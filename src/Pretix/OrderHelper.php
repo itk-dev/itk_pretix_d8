@@ -6,8 +6,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
-use ItkDev\Pretix\Client\Client;
-use ItkDev\Pretix\Entity\SubEvent;
+use ItkDev\Pretix\Api\Client;
+use ItkDev\Pretix\Api\Entity\SubEvent;
 
 /**
  * Pretix order helper.
@@ -37,7 +37,7 @@ class OrderHelper extends AbstractHelper {
    * @param string $orderCode
    *   The order code.
    *
-   * @return \ItkDev\Pretix\Entity\Order
+   * @return \ItkDev\Pretix\Api\Entity\Order
    *   The order.
    */
   public function getOrder($organizer, $event, $orderCode) {
@@ -150,7 +150,7 @@ class OrderHelper extends AbstractHelper {
   /**
    * Get sub-event availability from pretix.
    *
-   * @param \ItkDev\Pretix\Entity\SubEvent $subEvent
+   * @param \ItkDev\Pretix\Api\Entity\SubEvent $subEvent
    *   The sub-event.
    *
    * @return \Doctrine\Common\Collections\Collection
@@ -182,10 +182,10 @@ class OrderHelper extends AbstractHelper {
   /**
    * Ensure that the pretix callback webhook exists.
    *
-   * @param \ItkDev\Pretix\Client\Client $client
+   * @param \ItkDev\Pretix\Api\Client $client
    *   The pretix client.
    *
-   * @return \ItkDev\Pretix\Entity\Webhook
+   * @return \ItkDev\Pretix\Api\Entity\Webhook
    *   The webhook.
    */
   public function ensureWebhook(Client $client) {
@@ -232,7 +232,7 @@ class OrderHelper extends AbstractHelper {
   /**
    * Get sub-event availability from pretix.
    *
-   * @param \ItkDev\Pretix\Entity\SubEvent $subEvent
+   * @param \ItkDev\Pretix\Api\Entity\SubEvent $subEvent
    *   The sub-event.
    *
    * @return \Doctrine\Common\Collections\Collection

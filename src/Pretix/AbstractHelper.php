@@ -6,9 +6,9 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\itk_pretix\Exception\SynchronizeException;
 use Drupal\node\NodeInterface;
-use ItkDev\Pretix\Client\Client;
-use ItkDev\Pretix\Entity\Event;
-use ItkDev\Pretix\Entity\SubEvent;
+use ItkDev\Pretix\Api\Client;
+use ItkDev\Pretix\Api\Entity\Event;
+use ItkDev\Pretix\Api\Entity\SubEvent;
 
 /**
  * Abstract helper.
@@ -19,7 +19,7 @@ abstract class AbstractHelper {
   /**
    * The pretix client.
    *
-   * @var \ItkDev\Pretix\Client\Client
+   * @var \ItkDev\Pretix\Api\Client
    */
   protected $pretixClient;
 
@@ -61,7 +61,7 @@ abstract class AbstractHelper {
    * @param \Drupal\node\NodeInterface $node
    *   The node.
    *
-   * @return \ItkDev\Pretix\Client\Client
+   * @return \ItkDev\Pretix\Api\Client
    *   The client if any.
    */
   public function getPretixClient(NodeInterface $node) {
@@ -162,7 +162,7 @@ abstract class AbstractHelper {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node.
-   * @param \ItkDev\Pretix\Entity\Event $event
+   * @param \ItkDev\Pretix\Api\Entity\Event $event
    *   The event.
    * @param array $data
    *   The data.
@@ -217,7 +217,7 @@ abstract class AbstractHelper {
    *
    * @param object|null $item
    *   The item collection item.
-   * @param \ItkDev\Pretix\Entity\SubEvent $subEvent
+   * @param \ItkDev\Pretix\Api\Entity\SubEvent $subEvent
    *   The sub-event (id).
    * @param array $data
    *   The data.
