@@ -371,6 +371,82 @@ class EventHelper extends AbstractHelper {
   }
 
   /**
+   * Update event availability for a node.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   *
+   * @return array|null
+   *   On success, the event info. Otherwise an error.
+   *
+   * @throws \Exception
+   */
+  public function updateEventAvailability(NodeInterface $node) {
+    $client = $this->getPretixClient($node);
+    $info = $this->loadPretixEventInfo($node);
+    if (isset($info['pretix_event_slug'])) {
+      try {
+        $event = $client->getEvent($info['pretix_event_slug']);
+      }
+      catch (\Exception $exception) {
+        throw $this->clientException('Cannot get event', $exception);
+      }
+
+      try {
+        $quotas = $client->getQuotas($event);
+      }
+      catch (\Exception $exception) {
+        throw $this->clientException('Cannot get quotas', $exception);
+      }
+
+      foreach ($quotas as $quota) {
+        try {
+          $availability = $client->getQuotaAvailability($event, $quota);
+        }
+        catch (\Exception $exception) {
+          throw $this->clientException('Cannot get quota availability', $exception);
+        }
+        $quota->setAvailability($availability);
+      }
+
+      $info = $this->addPretixEventInfo($node, $event, ['quotas' => $quotas->toArray()]);
+      $this->setEventAvailability($node, $event);
+
+      return $info;
+    }
+
+    return NULL;
+  }
+
+  /**
+   * Set event availability for on a node.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   * @param \ItkDev\Pretix\Entity\Event $event
+   *   The event.
+   *
+   * @throws \Exception
+   */
+  private function setEventAvailability(NodeInterface $node, Event $event) {
+    $info = $this->loadPretixEventInfo($node, TRUE);
+    if (isset($info['data']['quotas'])) {
+      $available = FALSE;
+      foreach ($info['data']['quotas'] as $quota) {
+        if (isset($quota['availability']['available']) && TRUE === $quota['availability']['available']) {
+          $available = TRUE;
+          break;
+        }
+      }
+
+      if (!isset($info['available']) || $info['available'] !== $available) {
+        $this->addPretixEventInfo($node, $event, ['available' => $available]);
+        // @TODO Flush cache for node.
+      }
+    }
+  }
+
+  /**
    * Get pretix template event slug.
    *
    * @param \Drupal\node\NodeInterface $node

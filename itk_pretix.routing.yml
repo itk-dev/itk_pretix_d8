@@ -7,3 +7,12 @@ itk_pretix.pretix_config_form:
     _permission: 'access administration pages'
   options:
     _admin_route: TRUE
+
+itk_pretix.pretix_webhook:
+  path: '/itk_pretix/pretix/webhook'
+  defaults:
+    _controller: '\Drupal\itk_pretix\Controller\PretixWebhookController::main'
+    _title: 'pretix webhook'
+  methods: [POST]
+  requirements:
+    _permission: 'access content'

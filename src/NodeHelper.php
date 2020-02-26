@@ -173,7 +173,7 @@ class NodeHelper {
    * @return array|null
    *   The settings if a pretix_event_settings field exists on the node.
    */
-  private function getPretixSettings(NodeInterface $node) {
+  public function getPretixSettings(NodeInterface $node) {
     $field = $this->getFieldByType($node, 'pretix_event_settings_field_type');
 
     if (NULL !== $field) {
@@ -184,6 +184,19 @@ class NodeHelper {
     }
 
     return NULL;
+  }
+
+  /**
+   * Decide if node must be synchronized with pretix.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   *
+   * @return bool
+   *   The result.
+   */
+  public function getSynchronizeWithPretix(NodeInterface $node) {
+    return $this->getPretixSettings($node)['synchronize_event'] ?? FALSE;
   }
 
   /**

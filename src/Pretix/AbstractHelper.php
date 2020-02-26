@@ -236,7 +236,7 @@ abstract class AbstractHelper {
         ->fields('p')
         ->condition('pretix_subevent_id', $subEvent->getId(), '=')
         ->execute()
-        ->fetch();
+        ->fetchAssoc();
 
       $item = $result;
     }
@@ -285,7 +285,7 @@ abstract class AbstractHelper {
    *   The sub-event data.
    */
   public function loadPretixSubEventInfo(array $item, bool $reset = FALSE) {
-    $itemId = $item['uuid'];
+    $itemId = $item['uuid'] ?? $item['item_uuid'] ?? NULL;
     $info = &drupal_static(__METHOD__, []);
 
     if ($reset || !isset($info[$itemId])) {
