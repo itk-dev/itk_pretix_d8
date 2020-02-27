@@ -16,3 +16,31 @@ itk_pretix.pretix_webhook:
   methods: [POST]
   requirements:
     _permission: 'access content'
+
+itk_pretix.pretix_orders:
+  path: '/itk_pretix/pretix/orders/{node}'
+  defaults:
+    _controller: '\Drupal\itk_pretix\Controller\PretixController::orders'
+    _title: 'pretix orders'
+  methods: [GET]
+  requirements:
+    # We have to check permissions in the controller.
+    _permission: 'access content'
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+itk_pretix.pretix_orders_date:
+  path: '/itk_pretix/pretix/orders/{node}/{uuid}'
+  defaults:
+    _controller: '\Drupal\itk_pretix\Controller\PretixController::ordersDate'
+    _title: 'pretix date orders'
+  methods: [GET]
+  requirements:
+    # We have to check permissions in the controller.
+    _permission: 'access content'
+  options:
+    parameters:
+      node:
+        type: entity:node
