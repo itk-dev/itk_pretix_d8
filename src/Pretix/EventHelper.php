@@ -419,6 +419,66 @@ class EventHelper extends AbstractHelper {
   }
 
   /**
+   * Validate the the specified event is a valid template event.
+   *
+   * @param \ItkDev\Pretix\Api\Entity\Event $event
+   *   The event.
+   * @param \ItkDev\Pretix\Api\Client|null $client
+   *   The client.
+   *
+   * @return null|array
+   *   If null all is good. Otherwise, returns list of [key, error-message]
+   */
+  public function validateTemplateEvent(Event $event, Client $client) {
+    // @TODO Currently, we only support events with (multiple) dates.
+    if (!$event->hasSubevents()) {
+      return [
+        'event_slug' => t('This event does not have sub-events.'),
+      ];
+    }
+
+    try {
+      $subEvents = $client->getSubEvents($event);
+    }
+    catch (\Exception $exception) {
+      return [
+        'event_slug' => t('Cannot get sub-events.'),
+      ];
+    }
+
+    if (1 !== $subEvents->count()) {
+      return [
+        'event_slug' => t('Event must have exactly 1 date.'),
+      ];
+    }
+
+    $subEvent = $subEvents->first();
+    try {
+      $quotas = $client->getQuotas($event, ['subevent' => $subEvent->getId()]);
+    }
+    catch (\Exception $exception) {
+      return [
+        'event_slug' => t('Cannot get sub-event quotas.'),
+      ];
+    }
+
+    if (1 !== $quotas->count()) {
+      return [
+        'event_slug' => t('Date must have exactly 1 quota.'),
+      ];
+    }
+
+    $quota = $quotas->first();
+    if (1 !== count($quota->getItems())) {
+      return [
+        'event_slug' => t('Event date (sub-event) quota must apply to exactly 1 product.'),
+      ];
+    }
+
+    return NULL;
+  }
+
+  /**
    * Set event availability for on a node.
    *
    * @param \Drupal\node\NodeInterface $node
