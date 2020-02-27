@@ -4,6 +4,7 @@ namespace Drupal\itk_pretix\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use ItkDev\Pretix\Api\Client;
 
 /**
  * Class PretixConfigForm.
@@ -91,6 +92,24 @@ class PretixConfigForm extends ConfigFormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
+
+    try {
+      $client = new Client([
+        'url' => $form_state->get('pretix_url'),
+        'organizer' => $form_state->get('organizer_slug'),
+        'api_token' => $form_state->get('api_token'),
+      ]);
+    }
+    catch (\Exception $exception) {
+      $form_state->setErrorByName('pretix_url', $this->t('Cannot create pretix api client'));
+    }
+
+    try {
+      $client->getOrganizers();
+    }
+    catch (\Exception $exception) {
+      $form_state->setErrorByName('pretix_url', __METHOD__);
+    }
 
     // @TODO Validate pretix credentials.
     // @TODO Validate template events
