@@ -6,7 +6,8 @@
     "license": "MIT",
     "minimum-stability": "dev",
     "require": {
-        "itk-dev/pretix-api-client-php": "dev-develop"
+        "itk-dev/pretix-api-client-php": "dev-develop",
+        "drupal/config_filter": "*"
     },
     "require-dev": {
         "drupal/coder": "^8.3.1",
@@ -25,5 +26,11 @@
         "apply-coding-standards": [
             "@apply-coding-standards/phpcs"
         ]
+    },
+    "repositories": {
+        "drupal": {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
     }
 }
