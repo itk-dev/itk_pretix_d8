@@ -20,33 +20,39 @@ use Drupal\Core\Datetime\DrupalDateTime;
  * )
  */
 class PretixDateWidgetType extends WidgetBase {
+
   /**
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-    $element['location'] = array(
+    $element['uuid'] = [
+      '#type' => 'hidden',
+      '#default_value' => $items[$delta]->uuid ?? '',
+    ];
+
+    $element['location'] = [
       '#type' => 'textfield',
       '#title' => t('Location'),
       '#default_value' => isset($items[$delta]->location) ? $items[$delta]->location : '',
       '#size' => 45,
-    );
-    $element['address'] = array(
+    ];
+    $element['address'] = [
       '#type' => 'search',
       '#title' => t('Address'),
       '#default_value' => isset($items[$delta]->address) ? $items[$delta]->address : '',
       '#size' => 45,
-      '#attached' => array(
-        'library' => array(
-          'itk_pretix/itk-pretix'
-        )
-      ),
-      '#attributes' => array('class' => array('js-dawa-element'))
-    );
+      '#attached' => [
+        'library' => [
+          'itk_pretix/itk-pretix',
+        ],
+      ],
+      '#attributes' => ['class' => ['js-dawa-element']],
+    ];
 
     if ($items[$delta]->time_from) {
       $datePartsFrom = explode(' ', $items[$delta]->time_from);
     }
-    $element['time_from'] = array(
+    $element['time_from'] = [
       '#type' => 'datetime',
       '#title' => t('Start time'),
       '#default_value' => isset($datePartsFrom) ? DrupalDateTime::createFromFormat('Y-m-d H:i:s', $datePartsFrom[0] . ' ' . $datePartsFrom[1], $datePartsFrom[2]) : DrupalDateTime::createFromTimestamp($this->roundedTime(time())),
@@ -55,12 +61,12 @@ class PretixDateWidgetType extends WidgetBase {
       '#date_date_format' => 'd/m/Y',
       '#date_time_format' => 'H:i',
       '#size' => 15,
-    );
+    ];
 
     if ($items[$delta]->time_to) {
       $datePartsTo = explode(' ', $items[$delta]->time_to);
     }
-    $element['time_to'] = array(
+    $element['time_to'] = [
       '#type' => 'datetime',
       '#title' => t('End time'),
       '#default_value' => isset($datePartsTo) ? DrupalDateTime::createFromFormat('Y-m-d H:i:s', $datePartsTo[0] . ' ' . $datePartsTo[1], $datePartsTo[2]) : DrupalDateTime::createFromTimestamp($this->roundedTime(time())),
@@ -69,21 +75,21 @@ class PretixDateWidgetType extends WidgetBase {
       '#date_date_format' => 'd/m/Y',
       '#date_time_format' => 'H:i',
       '#size' => 15,
-    );
-    $element['spots'] = array(
+    ];
+    $element['spots'] = [
       '#type' => 'number',
       '#title' => t('Number of spots'),
       '#default_value' => isset($items[$delta]->spots) ? $items[$delta]->spots : '',
       '#size' => 3,
-    );
+    ];
 
     // If cardinality is 1, ensure a label is output for the field by wrapping
     // it in a details element.
     if ($this->fieldDefinition->getFieldStorageDefinition()->getCardinality() == 1) {
-      $element += array(
+      $element += [
         '#type' => 'fieldset',
-        '#attributes' => array('class' => array('container-inline')),
-      );
+        '#attributes' => ['class' => ['container-inline']],
+      ];
     }
 
     return $element;
@@ -92,12 +98,14 @@ class PretixDateWidgetType extends WidgetBase {
   /**
    * Round seconds to nearest hour.
    *
-   * @param $seconds
+   * @param int $seconds
    *   A timestamp.
+   *
    * @return float|int
    *   A rounded timestamp.
    */
   private function roundedTime($seconds) {
-    return round($seconds / 3600)*3600;
+    return round($seconds / 3600) * 3600;
   }
+
 }

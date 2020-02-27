@@ -4,12 +4,9 @@ namespace Drupal\itk_pretix\Plugin\Field\FieldType;
 
 use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
-use Drupal\Core\TypedData\TypedDataInterface;
 use Drupal\datetime\DateTimeComputed;
-use Drupal\itk_pretix\UuidComputed;
 
 /**
  * Plugin implementation of the 'pretix_date_field_type' field type.
@@ -28,11 +25,8 @@ class PretixDateFieldType extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-    $properties['uuid'] = DataDefinition::create('any')
+    $properties['uuid'] = DataDefinition::create('string')
       ->setLabel(t('UUID'))
-      ->setComputed(TRUE)
-      ->setClass(UuidComputed::class)
-      ->setSetting('uuid source', 'value')
       ->setRequired(TRUE);
     $properties['location'] = DataDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Location'))
@@ -109,6 +103,15 @@ class PretixDateFieldType extends FieldItemBase {
     $timeFrom = $this->get('time_from')->getValue();
     $timeTo = $this->get('time_to')->getValue();
     return empty($location) || empty($timeFrom) || empty($timeTo);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preSave() {
+    if (empty($this->get('uuid')->getValue())) {
+      $this->get('uuid')->setValue(\Drupal::service('uuid')->generate());
+    }
   }
 
 }
