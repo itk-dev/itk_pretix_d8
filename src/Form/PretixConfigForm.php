@@ -2,13 +2,41 @@
 
 namespace Drupal\itk_pretix\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\itk_pretix\Pretix\EventHelper;
+use ItkDev\Pretix\Api\Client;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class PretixConfigForm.
  */
 class PretixConfigForm extends ConfigFormBase {
+  /**
+   * The event helper.
+   *
+   * @var \Drupal\itk_pretix\Pretix\EventHelper
+   */
+  private $eventHelper;
+
+  /**
+   * {@inheritDoc}
+   */
+  public function __construct(ConfigFactoryInterface $config_factory, EventHelper $eventHelper) {
+    parent::__construct($config_factory);
+    $this->eventHelper = $eventHelper;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('itk_pretix.event_helper')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -92,8 +120,59 @@ class PretixConfigForm extends ConfigFormBase {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
 
-    // @TODO Validate pretix credentials.
-    // @TODO Validate template events
+    try {
+      $client = new Client([
+        'url' => $form_state->getValue('pretix_url'),
+        'organizer' => $form_state->getValue('organizer_slug'),
+        'api_token' => $form_state->getValue('api_token'),
+      ]);
+    }
+    catch (\Exception $exception) {
+      $form_state->setErrorByName('pretix_url', $this->t('Cannot create pretix api client'));
+      return;
+    }
+
+    try {
+      $client->getOrganizers();
+    }
+    catch (\Exception $exception) {
+      $form_state->setErrorByName('pretix_url', $this->t('Cannot connect to pretix api'));
+      return;
+    }
+
+    $templateEventSlugs = array_unique(array_filter(array_map('trim', explode(PHP_EOL, $form_state->getValue('template_event_slugs')))));
+    $templateEvents = [];
+    foreach ($templateEventSlugs as $eventSlug) {
+      try {
+        $event = $client->getEvent($eventSlug);
+        $templateEvents[$event->getSlug()] = $event;
+      }
+      catch (\Exception $exception) {
+      }
+    }
+
+    $invalidTemplateEventSlugs = array_diff($templateEventSlugs, array_keys($templateEvents));
+    if (!empty($invalidTemplateEventSlugs)) {
+      $form_state->setErrorByName('template_event_slugs',
+        $this->t('Invalid template event slugs: @event_slugs',
+          ['@event_slugs' => implode(', ', $invalidTemplateEventSlugs)]));
+      return;
+    }
+
+    foreach ($templateEvents as $event) {
+      $error = $this->eventHelper->validateTemplateEvent($event, $client);
+      if (is_array($error)) {
+        // We only show the first error message.
+        $message = reset($error);
+        $form_state->setErrorByName('template_event_slugs',
+          $this->t('Event @event_slug is not a valid template: @message', [
+            '@event_slug' => $event->getSlug(),
+            '@message' => $message,
+          ])
+        );
+        return;
+      }
+    }
   }
 
 }
