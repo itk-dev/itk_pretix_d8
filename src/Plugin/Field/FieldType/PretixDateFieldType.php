@@ -7,6 +7,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\datetime\DateTimeComputed;
+use Nicoeg\Dawa\Dawa;
 
 /**
  * Plugin implementation of the 'pretix_date_field_type' field type.
@@ -112,6 +113,34 @@ class PretixDateFieldType extends FieldItemBase {
     if (empty($this->get('uuid')->getValue())) {
       $this->get('uuid')->setValue(\Drupal::service('uuid')->generate());
     }
+
+    $address = $this->get('address')->getValue();
+    if (!empty($address)) {
+      try {
+        $results = (new Dawa())->accessAddressSearch($address);
+        if (isset($results[0]->adgangspunkt->koordinater)) {
+          $this->addData(['coordinates' => $results[0]->adgangspunkt->koordinater]);
+        }
+      }
+      catch (\Exception $exception) {
+      }
+    }
+  }
+
+  /**
+   * Add data to this date.
+   *
+   * @param array $values
+   *   The values to add.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
+   */
+  private function addData(array $values) {
+    $field = $this->get('data');
+    $value = $field->getValue() ?? [];
+    $value = array_merge($value, $values);
+    $field->setValue($value);
   }
 
 }

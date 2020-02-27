@@ -33,6 +33,7 @@ class PretixDateFormatterType extends FormatterBase {
           'time_from' => $item->time_from,
           'time_to' => $item->time_to,
           'spots' => $item->spots,
+          'data' => $item->data,
         ],
       ];
     }

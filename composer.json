@@ -7,6 +7,7 @@
     "minimum-stability": "dev",
     "require": {
         "itk-dev/pretix-api-client-php": "dev-develop",
+        "nicoeg/dawa": "^1.0",
         "drupal/config_filter": "*"
     },
     "require-dev": {
