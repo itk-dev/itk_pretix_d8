@@ -91,6 +91,9 @@ class PretixDateFieldType extends FieldItemBase {
           'serialize' => TRUE,
         ],
       ],
+      'indexes' => [
+        'value' => ['uuid'],
+      ],
     ];
 
     return $schema;
