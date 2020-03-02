@@ -56,6 +56,20 @@ function itk_pretix_schema() {
           'length' => 36,
           'not null' => TRUE,
         ],
+        'pretix_organizer_slug' => [
+          'description' => 'The pretix organizer slug',
+          'type' => 'varchar',
+          'length' => 50,
+          'not null' => TRUE,
+          'default' => '',
+        ],
+        'pretix_event_slug' => [
+          'description' => 'The pretix event slug',
+          'type' => 'varchar',
+          'length' => 50,
+          'not null' => TRUE,
+          'default' => '',
+        ],
         'pretix_subevent_id' => [
           'description' => 'The pretix subevent id',
           'type' => 'int',
@@ -72,6 +86,8 @@ function itk_pretix_schema() {
       ],
       'primary key' => [
         'item_uuid',
+        'pretix_organizer_slug',
+        'pretix_event_slug',
         'pretix_subevent_id',
       ],
     ],

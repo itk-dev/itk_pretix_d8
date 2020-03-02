@@ -40,6 +40,7 @@ itk_pretix.pretix_orders_date:
   requirements:
     # We have to check permissions in the controller.
     _permission: 'access content'
+    _format: 'html|json|csv'
   options:
     parameters:
       node:

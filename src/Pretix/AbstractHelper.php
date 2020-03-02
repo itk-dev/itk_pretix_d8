@@ -5,6 +5,8 @@ namespace Drupal\itk_pretix\Pretix;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\itk_pretix\Exception\SynchronizeException;
+use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType;
+use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Client;
 use ItkDev\Pretix\Api\Entity\Event;
@@ -102,23 +104,22 @@ abstract class AbstractHelper {
    * @param string|object $event
    *   The event.
    *
-   * @return null|object
+   * @return null|NodeInterface
    *   The node if found.
    */
   public function getNode($organizer, $event) {
     $organizerSlug = $this->getSlug($organizer);
     $eventSlug = $this->getSlug($event);
 
-    $result = db_select('itk_pretix_events', 'p')
+    $result = $this->database
+      ->select('itk_pretix_events', 'p')
       ->fields('p')
       ->condition('pretix_organizer_slug', $organizerSlug, '=')
       ->condition('pretix_event_slug', $eventSlug, '=')
       ->execute()
       ->fetch();
 
-    $node = isset($result->nid) ? node_load($result->nid) : NULL;
-
-    return $node ?? NULL;
+    return Node::load($result->nid ?? NULL);
   }
 
   /**
@@ -180,21 +181,19 @@ abstract class AbstractHelper {
     // The values to store in the database.
     $fields = [];
     if (NULL === $info || $reset) {
-      $config = $this->getPretixConfiguration($node);
       $fields = [
         'nid' => $node->id(),
-        'pretix_organizer_slug' => $config['organizer_slug'],
+        'pretix_organizer_slug' => $event->getOrganizerSlug(),
         'pretix_event_slug' => $event->getSlug(),
       ];
 
-      $pretixUrl = rtrim($config['pretix_url'], '/');
       $data += [
-        'pretix_url' => $pretixUrl,
-        'pretix_event_url' => $pretixUrl . '/control/event/' . $fields['pretix_organizer_slug'] . '/' . $fields['pretix_event_slug'] . '/',
-        'pretix_event_shop_url' => $pretixUrl . '/' . $fields['pretix_organizer_slug'] . '/' . $fields['pretix_event_slug'] . '/',
-        'pretix_organizer_slug' => $config['organizer_slug'],
+        'pretix_url' => $event->getPretixUrl(),
+        'pretix_event_url' => $event->getUrl(),
+        'pretix_event_shop_url' => $event->getShopUrl(),
+        'pretix_organizer_slug' => $event->getOrganizerSlug(),
         'pretix_event_slug' => $event->getSlug(),
-        'event' => $event,
+        'event' => $event->toArray(),
       ];
     }
 
@@ -229,31 +228,24 @@ abstract class AbstractHelper {
    *
    * @throws \Exception
    */
-  public function addPretixSubEventInfo($item, SubEvent $subEvent, array $data, $reset = FALSE) {
-    if (NULL === $item && NULL !== $subEvent->getId()) {
-      $result = $this->database
-        ->select('itk_pretix_subevents', 'p')
-        ->fields('p')
-        ->condition('pretix_subevent_id', $subEvent->getId(), '=')
-        ->execute()
-        ->fetchAssoc();
-
-      $item = $result;
-    }
-
-    $subEventId = $subEvent->getId();
-
+  public function addPretixSubEventInfo(PretixDateFieldType $item, SubEvent $subEvent, array $data, $reset = FALSE) {
     $info = $this->loadPretixSubEventInfo($item, TRUE);
     // The values to store in the database.
     $fields = [];
     if (NULL === $info || $reset) {
       $fields = [
-        'item_uuid' => $item['uuid'],
+        'item_uuid' => $item->uuid,
+        'pretix_organizer_slug' => $subEvent->getOrganizerSlug(),
+        'pretix_event_slug' => $subEvent->getEventSlug(),
         'pretix_subevent_id' => $subEvent->getId(),
       ];
 
       $data += [
         'pretix_subevent_id' => $subEvent->getId(),
+        'pretix_url' => $subEvent->getPretixUrl(),
+        'pretix_subevent_url' => $subEvent->getUrl(),
+        'pretix_subevent_shop_url' => $subEvent->getShopUrl(),
+        'subevent' => $subEvent->toArray(),
       ];
     }
 
@@ -264,7 +256,7 @@ abstract class AbstractHelper {
     $this->database
       ->merge('itk_pretix_subevents')
       ->key([
-        'item_uuid' => $item['uuid'],
+        'item_uuid' => $item->uuid,
         'pretix_subevent_id' => $subEvent->getId(),
       ])
       ->fields($fields)
@@ -276,7 +268,7 @@ abstract class AbstractHelper {
   /**
    * Load pretix sub-event info from database.
    *
-   * @param array $item
+   * @param array|PretixDateFieldType $item
    *   The date item.
    * @param bool $reset
    *   If set, data will be read from database.
@@ -284,28 +276,27 @@ abstract class AbstractHelper {
    * @return array|null
    *   The sub-event data.
    */
-  public function loadPretixSubEventInfo(array $item, bool $reset = FALSE) {
-    $itemId = $item['uuid'] ?? $item['item_uuid'] ?? NULL;
+  public function loadPretixSubEventInfo(PretixDateFieldType $item, bool $reset = FALSE) {
     $info = &drupal_static(__METHOD__, []);
 
-    if ($reset || !isset($info[$itemId])) {
+    if ($reset || !isset($info[$item->uuid])) {
       $record = $this->database
         ->select('itk_pretix_subevents', 'p')
         ->fields('p')
-        ->condition('item_uuid', $itemId, '=')
+        ->condition('item_uuid', $item->uuid, '=')
         ->execute()
         ->fetch();
 
       if (!empty($record)) {
-        $info[$itemId] = [
-          'item_uuid' => (int) $record->item_uuid,
+        $info[$item->uuid] = [
+          'item_uuid' => $record->item_uuid,
           'pretix_subevent_id' => (int) $record->pretix_subevent_id,
           'data' => json_decode($record->data, TRUE),
         ];
       }
     }
 
-    return $info[$itemId] ?? NULL;
+    return $info[$item->uuid] ?? NULL;
   }
 
   /**
@@ -378,6 +369,31 @@ abstract class AbstractHelper {
     }
 
     return NULL;
+  }
+
+  /**
+   * Load the date item associated with a sub-event.
+   *
+   * @param \ItkDev\Pretix\Api\Entity\SubEvent $subEvent
+   *   The sub-event.
+   *
+   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType|null
+   *   The date item.
+   */
+  public function loadDateItem(SubEvent $subEvent) {
+    $item = $this->database
+      ->select('itk_pretix_subevents', 'p')
+      ->fields('p')
+      ->condition('pretix_organizer_slug', $subEvent->getOrganizerSlug(), '=')
+      ->condition('pretix_event_slug', $subEvent->getEventSlug(), '=')
+      ->condition('pretix_subevent_id', $subEvent->getId(), '=')
+      ->execute()
+      ->fetchAssoc();
+
+    return isset($item['item_uuid'])
+      // @TODO Refactor helpers to prevent this circular dependency.
+      ? \Drupal::service('itk_pretix.node_helper')->loadDateItem($item['item_uuid'])
+      : NULL;
   }
 
   /**

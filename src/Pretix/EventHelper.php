@@ -2,8 +2,12 @@
 
 namespace Drupal\itk_pretix\Pretix;
 
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\itk_pretix\Exception\SynchronizeException;
+use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Client;
 use ItkDev\Pretix\Api\Entity\Event;
@@ -42,22 +46,25 @@ class EventHelper extends AbstractHelper {
     $info = $this->loadPretixEventInfo($node);
     $isNewEvent = NULL === $info;
 
+    /** @var \Drupal\Core\Field\FieldItemListInterface $dates */
     $dates = $options['dates'] ?? NULL;
+    /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettingsFieldType $settings */
     $settings = $options['settings'] ?? NULL;
 
     if (empty($dates)) {
       throw new SynchronizeException($this->t('No dates specified'));
     }
 
-    if (!isset($settings['template_event'])) {
+    if (!isset($settings->template_event)) {
       throw new SynchronizeException($this->t('No template event specified'));
     }
-    $templateEventSlug = $settings['template_event'];
+    $templateEventSlug = $settings->template_event;
 
     $name = $this->getEventName($node);
-    // Get location from first date.
-    $location = $this->getLocation(reset($dates));
-    $startDate = reset($dates)['time_from'];
+    // Get location and startDate from first date.
+    $firstDate = $dates->first();
+    $location = $this->getLocation($firstDate);
+    $startDate = $firstDate->get('time_from')->getValue();
 
     // @TODO Handle locales?
     $data = [
@@ -114,7 +121,7 @@ class EventHelper extends AbstractHelper {
    *   The event.
    * @param \Drupal\node\NodeInterface $node
    *   The node.
-   * @param array $dates
+   * @param \Drupal\Core\Field\FieldItemListInterface $dates
    *   The dates.
    * @param \ItkDev\Pretix\Api\Client $client
    *   The client.
@@ -124,7 +131,7 @@ class EventHelper extends AbstractHelper {
    *
    * @throws \Exception
    */
-  public function synchronizePretixSubEvents(Event $event, NodeInterface $node, array $dates, Client $client) {
+  public function synchronizePretixSubEvents(Event $event, NodeInterface $node, FieldItemListInterface $dates, Client $client) {
     $info = [];
     $subEventIds = [];
     foreach ($dates as $date) {
@@ -163,7 +170,7 @@ class EventHelper extends AbstractHelper {
   /**
    * Synchronize pretix sub-event.
    *
-   * @param object $item
+   * @param \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType $item
    *   The item.
    * @param \ItkDev\Pretix\Api\Entity\Event $event
    *   The event.
@@ -177,7 +184,7 @@ class EventHelper extends AbstractHelper {
    *
    * @throws \Exception
    */
-  private function synchronizePretixSubEvent($item, Event $event, NodeInterface $node, Client $client) {
+  private function synchronizePretixSubEvent(PretixDateFieldType $item, Event $event, NodeInterface $node, Client $client) {
     $itemInfo = $this->loadPretixSubEventInfo($item, TRUE);
     $isNewItem = NULL === $itemInfo;
 
@@ -225,15 +232,13 @@ class EventHelper extends AbstractHelper {
     }
 
     $location = $this->getLocation($item);
-    // @TODO Handle geo location.
-    $geoLat = NULL;
-    $geoLng = NULL;
+    [$geoLat, $geoLng] = $item->data['coordinates'] ?? [NULL, NULL];
 
     // @TODO Handle locales.
     $data = array_merge($data, [
       'name' => ['en' => $this->getEventName($node)],
-      'date_from' => $this->formatDate($item['time_from']),
-      'date_to' => $this->formatDate($item['time_to']),
+      'date_from' => $this->formatDate($item->time_from),
+      'date_to' => $this->formatDate($item->time_to),
       'location' => ['en' => $location],
       'geo_lat' => $geoLat,
       'get_lng' => $geoLng,
@@ -299,7 +304,7 @@ class EventHelper extends AbstractHelper {
       $quotaData = array_merge($quotaData, [
         'subevent' => $subEvent->getId(),
         'items' => [$product->getId()],
-        'size' => (int) $item['spots'],
+        'size' => (int) $item->spots,
       ]);
       try {
         $quota = $client->createQuota($event, $quotaData);
@@ -501,7 +506,7 @@ class EventHelper extends AbstractHelper {
 
       if (!isset($info['available']) || $info['available'] !== $available) {
         $this->addPretixEventInfo($node, $event, ['available' => $available]);
-        // @TODO Flush cache for node.
+        Cache::invalidateTags($node->getCacheTags());
       }
     }
   }
@@ -558,14 +563,10 @@ class EventHelper extends AbstractHelper {
    * @return string
    *   The event location.
    */
-  private function getLocation(array $item = NULL) {
-    if (NULL === $item) {
-      return NULL;
-    }
-
+  private function getLocation(PretixDateFieldType $item) {
     return implode(PHP_EOL, array_filter([
-      $item['location'] ?? NULL,
-      $item['address'] ?? NULL,
+      $item->location ?? NULL,
+      $item->address ?? NULL,
     ]));
   }
 
@@ -583,6 +584,10 @@ class EventHelper extends AbstractHelper {
   private function getDate($value) {
     if (NULL === $value) {
       return NULL;
+    }
+
+    if ($value instanceof DrupalDateTime) {
+      return $value->getPhpDateTime();
     }
 
     if ($value instanceof \DateTime) {
@@ -610,11 +615,7 @@ class EventHelper extends AbstractHelper {
   private function formatDate($date = NULL) {
     $date = $this->getDate($date);
 
-    if (NULL === $date) {
-      return NULL;
-    }
-
-    return $date->format(\DateTime::ATOM);
+    return NULL === $date ? NULL : $date->format(\DateTime::ATOM);
   }
 
 }

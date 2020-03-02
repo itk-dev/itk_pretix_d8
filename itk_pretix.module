@@ -34,6 +34,20 @@ function itk_pretix_theme() {
       'template' => 'itk-pretix-date-entry',
       'variables' => ['variables' => NULL]
     ],
+    'itk_pretix_date_data' => [
+      'template' => 'itk-pretix-date-data',
+      'variables' => ['data' => NULL]
+    ],
+    'itk_pretix_orders_date' => [
+      'template' => 'itk-pretix-orders-date',
+      'variables' => [
+        'node' => NULL,
+        'event' => NULL,
+        'sub_event' => NULL,
+        'orders' => NULL,
+        'exports' => NULL,
+      ],
+    ],
   ];
 }
 

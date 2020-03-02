@@ -24,6 +24,14 @@ class PretixDateFormatterType extends FormatterBase {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
 
+    // Sort descending by time_from.
+    $indexed = [];
+    foreach ($items as $item) {
+      $indexed[$item->time_from] = $item;
+    }
+    krsort($indexed);
+    $items = array_values($indexed);
+
     foreach ($items as $delta => $item) {
       $elements[$delta] = [
         '#theme' => 'itk_pretix_date_entry',
@@ -33,7 +41,10 @@ class PretixDateFormatterType extends FormatterBase {
           'time_from' => $item->time_from,
           'time_to' => $item->time_to,
           'spots' => $item->spots,
-          'data' => $item->data,
+          'data' => array_merge(
+            $item->data ?? [],
+            \Drupal::service('itk_pretix.event_helper')->loadPretixSubEventInfo($item) ?? []
+          ),
         ],
       ];
     }
