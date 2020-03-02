@@ -88,7 +88,6 @@ class PretixDateWidgetType extends WidgetBase {
     if ($this->fieldDefinition->getFieldStorageDefinition()->getCardinality() == 1) {
       $element += [
         '#type' => 'fieldset',
-        '#attributes' => ['class' => ['container-inline']],
       ];
     }
 

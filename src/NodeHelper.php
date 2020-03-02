@@ -57,10 +57,7 @@ class NodeHelper {
     foreach ($templateEventSlugs as $slug) {
       try {
         $event = $client->getEvent($slug);
-
-        if ((1 === $dateCardinality && !$event->hasSubevents()) || (1 !== $dateCardinality && $event->hasSubevents())) {
-          $events[] = $event;
-        }
+        $events[] = $event;
       }
       catch (\Exception $exception) {
       }
