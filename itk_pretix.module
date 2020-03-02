@@ -86,3 +86,10 @@ function itk_pretix_node_update(NodeInterface $node) {
 function itk_pretix_node_delete(NodeInterface $node) {
   \Drupal::service('itk_pretix.node_helper')->synchronizeEvent($node, 'delete');
 }
+
+/**
+ * Implements hook_cloned_node_alter().
+ */
+function itk_pretix_cloned_node_alter(NodeInterface $node) {
+  \Drupal::service('itk_pretix.node_helper')->clonedNodeAlter($node);
+}

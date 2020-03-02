@@ -83,6 +83,30 @@ class PretixDateWidgetType extends WidgetBase {
       '#size' => 3,
     ];
 
+    if (isset($item->uuid)) {
+      $pretixOrdersListUrl = $item->getEntity()->id()
+        ? Url::fromRoute('itk_pretix.pretix_orders_date',
+          [
+            'node' => $item->getEntity()->id(),
+            'uuid' => $item->uuid,
+          ], [
+            'absolute' => TRUE,
+          ]
+        )
+        : NULL;
+
+      $element['data'] = [
+        '#theme' => 'itk_pretix_date_data',
+        '#data' => array_merge(
+          $item->data ?? [],
+          $eventHelper->loadPretixSubEventInfo($item) ?? [],
+          [
+            'pretix_orders_list_url' => $pretixOrdersListUrl,
+          ]
+        ),
+      ];
+    }
+
     // If cardinality is 1, ensure a label is output for the field by wrapping
     // it in a details element.
     if ($this->fieldDefinition->getFieldStorageDefinition()->getCardinality() == 1) {
