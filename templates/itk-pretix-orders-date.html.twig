@@ -27,26 +27,25 @@
 
   <table class="table">
     <thead>
-    <tr>
-      <th>{{ 'Order'|t }}</th>
-      <th>{{ 'Name'|t }}</th>
-      <th>{{ 'Email'|t }}</th>
-      <th>{{ 'Price'|t }}</th>
-    </tr>
+      <tr>
+        <th>{{ 'Order'|t }}</th>
+        <th>{{ 'Name'|t }}</th>
+        <th>{{ 'Email'|t }}</th>
+        <th>{{ 'Price'|t }}</th>
+      </tr>
     </thead>
     <tbody>
-    {% for order in orders %}
-      {%  set order_url = order.getUrl %}
-    {% for position in order.getPositions %}
-      <tr>
-        <td><a href="{{  order_url }} ">{{ position.getOrder }}/{{ position.getSubevent }}</a></td>
-        <td>{{ position.getAttendeeName|default('–') }}</td>
-        <td>{{ position.getAttendeeEmail|default('–') }}</td>
-        <td>{{ position.getPrice }}</td>
-        {#<td>{{ dump(position) }}</td>#}
-      </tr>
-    {% endfor %}
-    {% endfor %}
+      {% for order in orders %}
+        {% set order_url = order.getUrl %}
+        {% for position in order.getPositions %}
+          <tr>
+            <td><a href="{{  order_url }} ">{{ position.getOrder }}/{{ position.getSubevent }}</a></td>
+            <td>{{ position.getAttendeeName|default('–') }}</td>
+            <td>{{ position.getAttendeeEmail|default('–') }}</td>
+            <td>{{ position.getPrice }}</td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
     </tbody>
   </table>
 
