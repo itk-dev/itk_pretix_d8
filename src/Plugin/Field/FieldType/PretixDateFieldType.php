@@ -154,4 +154,11 @@ class PretixDateFieldType extends FieldItemBase {
     $field->setValue($value);
   }
 
+  /**
+   * Handler for hook_cloned_node_alter().
+   */
+  public function clonedNodeAlter() {
+    $this->get('uuid')->setValue(NULL);
+  }
+
 }

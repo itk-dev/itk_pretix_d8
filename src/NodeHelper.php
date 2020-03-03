@@ -183,6 +183,23 @@ class NodeHelper {
   }
 
   /**
+   * Handler for hook_cloned_node_alter().
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The cloned node.
+   */
+  public function clonedNodeAlter(NodeInterface $node) {
+    $dates = $this->getFieldByType($node, 'pretix_date_field_type');
+
+    if (NULL !== $dates) {
+      /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType $date */
+      foreach ($dates as $date) {
+        $date->clonedNodeAlter();
+      }
+    }
+  }
+
+  /**
    * Get dates from a node.
    *
    * @param \Drupal\node\NodeInterface $node
