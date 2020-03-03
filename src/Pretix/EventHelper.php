@@ -6,7 +6,6 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\itk_pretix\Exception\SynchronizeException;
 use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Client;
@@ -52,11 +51,11 @@ class EventHelper extends AbstractHelper {
     $settings = $options['settings'] ?? NULL;
 
     if (empty($dates)) {
-      throw new SynchronizeException($this->t('No dates specified'));
+      throw $this->clientException($this->t('No dates specified'));
     }
 
     if (!isset($settings->template_event)) {
-      throw new SynchronizeException($this->t('No template event specified'));
+      throw $this->clientException($this->t('No template event specified'));
     }
     $templateEventSlug = $settings->template_event;
 
@@ -84,7 +83,7 @@ class EventHelper extends AbstractHelper {
         $event = $client->cloneEvent($templateEventSlug, $data);
       }
       catch (\Exception $exception) {
-        throw new SynchronizeException($this->t('Cannot clone event'), 0, $exception);
+        throw $this->clientException($this->t('Cannot clone event'), $exception);
       }
       $eventData['template_event_slug'] = $templateEventSlug;
     }
@@ -93,7 +92,7 @@ class EventHelper extends AbstractHelper {
         $event = $client->updateEvent($info['pretix_event_slug'], $data);
       }
       catch (\Exception $exception) {
-        throw new SynchronizeException($this->t('Cannot update event'), 0, $exception);
+        throw $this->clientException($this->t('Cannot update event'), $exception);
       }
     }
 
@@ -536,7 +535,13 @@ class EventHelper extends AbstractHelper {
    *   The event slug.
    */
   private function getEventSlug(NodeInterface $node) {
-    $template = $this->configuration['pretix_event_slug_template'] ?? '!nid';
+    $configuration = $this->getPretixConfiguration($node);
+    $template = $configuration['pretix_event_slug_template'] ?? '!nid';
+
+    // Make sure that node id is used in template.
+    if (FALSE === strpos($template, '!nid')) {
+      $template .= '-!nid';
+    }
 
     return str_replace(['!nid'], [$node->id()], $template);
   }
