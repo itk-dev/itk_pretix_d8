@@ -72,7 +72,7 @@ class PretixConfigForm extends ConfigFormBase {
     $form['organizer_slug'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Organizer (short form)'),
-      '#description' => $this->t('The part of the url immediately after the domain name, e.g. "organizer-short-name" in "https://pretix.eu/control/organizer/organizer-short-name/"'),
+      '#description' => $this->t('The part of the url immediately after "/control/organizer/", e.g. "organizer-short-name" in "https://pretix.eu/control/organizer/organizer-short-name/"'),
       '#maxlength' => 64,
       '#size' => 64,
       '#default_value' => $config->get('organizer_slug'),

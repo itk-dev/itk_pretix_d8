@@ -405,9 +405,9 @@ abstract class AbstractHelper {
       \Drupal::logger('itk_pretix')->error($message);
     }
     else {
-      \Drupal::logger('itk_pretix')->error('!message: !client_message: ', [
-        '!message' => $message,
-        '!client_message' => $clientException->getMessage(),
+      \Drupal::logger('itk_pretix')->error('@message: @client_message: ', [
+        '@message' => $message,
+        '@client_message' => $clientException->getMessage(),
         'client_exception' => $clientException,
       ]);
     }
