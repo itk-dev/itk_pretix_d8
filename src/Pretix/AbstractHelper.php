@@ -401,6 +401,17 @@ abstract class AbstractHelper {
    */
   protected function clientException(string $message, \Exception $clientException = NULL) {
     // @TODO Log the exception.
+    if (NULL === $clientException) {
+      \Drupal::logger('itk_pretix')->error($message);
+    }
+    else {
+      \Drupal::logger('itk_pretix')->error('!message: !client_message: ', [
+        '!message' => $message,
+        '!client_message' => $clientException->getMessage(),
+        'client_exception' => $clientException,
+      ]);
+    }
+
     return new SynchronizeException($message, 0, $clientException);
   }
 
