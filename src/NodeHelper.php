@@ -7,6 +7,7 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use Drupal\itk_pretix\Pretix\EventHelper;
 
@@ -35,6 +36,55 @@ class NodeHelper {
   public function __construct(EventHelper $eventHelper, MessengerInterface $messenger) {
     $this->eventHelper = $eventHelper;
     $this->setMessenger($messenger);
+  }
+
+  /**
+   * Get a date item by uuid.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   * @param string $uuid
+   *   The date item uuid.
+   *
+   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType|null
+   *   The date item if any.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   */
+  public function getDateItem(NodeInterface $node, string $uuid) {
+    $field = $this->getFieldByType($node, 'pretix_date_field_type');
+
+    if (NULL !== $field) {
+      foreach ($field as $item) {
+        if ($item->uuid === $uuid) {
+          return $item;
+        }
+      }
+    }
+
+    return NULL;
+  }
+
+  /**
+   * Load a PretixDateFieldType by uuid.
+   *
+   * @param string $uuid
+   *   The uuid.
+   *
+   * @return null|PretixDateFieldType
+   *   The date item.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   */
+  public function loadDateItem(string $uuid) {
+    $query = \Drupal::entityQuery('node')
+      ->condition('field_pretix_dates.uuid', $uuid);
+
+    $nids = $query->execute();
+    // We only want one node (and ignore non-unique unique ids for now).
+    $node = Node::load(reset($nids));
+
+    return $node ? $this->getDateItem($node, $uuid) : NULL;
   }
 
   /**
@@ -79,7 +129,7 @@ class NodeHelper {
 
     if (NULL !== $dates) {
       $settings = $this->getPretixSettings($node);
-      if (!isset($settings['synchronize_event'])) {
+      if (!$settings->synchronize_event) {
         return;
       }
 
@@ -138,24 +188,22 @@ class NodeHelper {
    * @param \Drupal\node\NodeInterface $node
    *   The node.
    *
-   * @return array|null
+   * @return \Drupal\Core\Field\FieldItemListInterface|null
    *   A list of dates if a pretix_date field exists on the node.
    */
   private function getPretixDates(NodeInterface $node) {
-    $field = $this->getFieldByType($node, 'pretix_date_field_type');
+    $items = $this->getFieldByType($node, 'pretix_date_field_type');
 
-    if (NULL !== $field) {
-      $dates = $field->getValue();
-
-      foreach ($dates as &$date) {
+    if (NULL !== $items) {
+      foreach ($items as $item) {
         foreach (['time_from', 'time_to'] as $key) {
-          if (isset($date[$key]) && is_string($date[$key])) {
-            $date[$key] = new DrupalDateTime($date[$key]);
+          if (isset($item->{$key}) && is_string($item->{$key})) {
+            $item->{$key} = new DrupalDateTime($item->{$key});
           }
         }
       }
 
-      return $dates;
+      return $items;
     }
 
     return NULL;
@@ -167,20 +215,15 @@ class NodeHelper {
    * @param \Drupal\node\NodeInterface $node
    *   The node.
    *
-   * @return array|null
+   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettingsFieldType|null
    *   The settings if a pretix_event_settings field exists on the node.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function getPretixSettings(NodeInterface $node) {
-    $field = $this->getFieldByType($node, 'pretix_event_settings_field_type');
+    $items = $this->getFieldByType($node, 'pretix_event_settings_field_type');
 
-    if (NULL !== $field) {
-      return [
-        'template_event' => 'template-series',
-        'synchronize_event' => TRUE,
-      ];
-    }
-
-    return NULL;
+    return NULL !== $items ? $items->first() : NULL;
   }
 
   /**
@@ -191,9 +234,11 @@ class NodeHelper {
    *
    * @return bool
    *   The result.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function getSynchronizeWithPretix(NodeInterface $node) {
-    return $this->getPretixSettings($node)['synchronize_event'] ?? FALSE;
+    return $this->getPretixSettings($node)->synchronize_event ?? FALSE;
   }
 
   /**

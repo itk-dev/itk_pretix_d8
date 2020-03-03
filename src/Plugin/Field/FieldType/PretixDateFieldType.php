@@ -19,6 +19,14 @@ use Nicoeg\Dawa\Dawa;
  *   default_widget = "pretix_date_widget_type",
  *   default_formatter = "pretix_date_formatter_type"
  * )
+ *
+ * @property string uuid
+ * @property string location
+ * @property string address
+ * @property string|DateTimeComputed time_from
+ * @property string|DateTimeComputed time_to
+ * @property int spots
+ * @property array data
  */
 class PretixDateFieldType extends FieldItemBase {
 
@@ -91,6 +99,9 @@ class PretixDateFieldType extends FieldItemBase {
           'serialize' => TRUE,
         ],
       ],
+      'indexes' => [
+        'value' => ['uuid'],
+      ],
     ];
 
     return $schema;
@@ -136,7 +147,7 @@ class PretixDateFieldType extends FieldItemBase {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
    */
-  private function addData(array $values) {
+  public function addData(array $values) {
     $field = $this->get('data');
     $value = $field->getValue() ?? [];
     $value = array_merge($value, $values);
