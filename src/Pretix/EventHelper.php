@@ -536,7 +536,13 @@ class EventHelper extends AbstractHelper {
    *   The event slug.
    */
   private function getEventSlug(NodeInterface $node) {
-    $template = $this->configuration['pretix_event_slug_template'] ?? '!nid';
+    $configuration = $this->getPretixConfiguration($node);
+    $template = $configuration['pretix_event_slug_template'] ?? '!nid';
+
+    // Make sure that node id is used in template.
+    if (FALSE === strpos($template, '!nid')) {
+      $template .= '-!nid';
+    }
 
     return str_replace(['!nid'], [$node->id()], $template);
   }
