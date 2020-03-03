@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\itk_pretix\Pretix\EventHelper;
+use Drupal\itk_pretix\Pretix\OrderHelper;
 use ItkDev\Pretix\Api\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -21,11 +22,19 @@ class PretixConfigForm extends ConfigFormBase {
   private $eventHelper;
 
   /**
+   * The order helper.
+   *
+   * @var \Drupal\itk_pretix\Pretix\OrderHelper
+   */
+  private $orderHelper;
+
+  /**
    * {@inheritDoc}
    */
-  public function __construct(ConfigFactoryInterface $config_factory, EventHelper $eventHelper) {
+  public function __construct(ConfigFactoryInterface $config_factory, EventHelper $eventHelper, OrderHelper $orderHelper) {
     parent::__construct($config_factory);
     $this->eventHelper = $eventHelper;
+    $this->orderHelper = $orderHelper;
   }
 
   /**
@@ -34,7 +43,8 @@ class PretixConfigForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('itk_pretix.event_helper')
+      $container->get('itk_pretix.event_helper'),
+      $container->get('itk_pretix.order_helper')
     );
   }
 
@@ -173,6 +183,16 @@ class PretixConfigForm extends ConfigFormBase {
         return;
       }
     }
+
+    try {
+      $this->orderHelper->ensureWebhook($client);
+      \Drupal::messenger()->addStatus($this->t('pretix webhook created'));
+    }
+    catch (\Exception $exception) {
+      $form_state->setErrorByName('pretix_url', $this->t('Cannot create webhook in pretix'));
+      return;
+    }
+
   }
 
 }
