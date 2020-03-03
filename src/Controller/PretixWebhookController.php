@@ -4,7 +4,6 @@ namespace Drupal\itk_pretix\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\itk_pretix\Pretix\OrderHelper;
-use ItkDev\Pretix\Api\Entity\Quota;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -124,18 +123,10 @@ class PretixWebhookController extends ControllerBase {
             continue;
           }
 
-          try {
-            $quotas = $this->orderHelper->getSubEventAvailability($subEvent);
-            $subEventData['availability'] = $quotas->map(static function (Quota $quota) {
-              return $quota->toArray();
-            })->toArray();
-            $this->orderHelper->addPretixSubEventInfo(
-              NULL,
-              $subEvent,
-              $subEventData);
-          }
-          catch (\Exception $exception) {
-          }
+          $quotas = $this->orderHelper->getSubEventAvailability($subEvent);
+          $subEventData['availability'] = $quotas->toArray();
+          $item = $this->eventHelper->loadDateItem($subEvent);
+          $this->orderHelper->addPretixSubEventInfo($item, $subEvent, $subEventData);
         }
       }
 

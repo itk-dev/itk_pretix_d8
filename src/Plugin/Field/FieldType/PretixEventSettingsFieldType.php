@@ -16,6 +16,9 @@ use Drupal\Core\TypedData\DataDefinition;
  *   description = @Translation("pretix event settings"),
  *   default_widget = "pretix_event_settings_widget_type"
  * )
+ *
+ * @property string template_event
+ * @property bool synchronize_event
  */
 class PretixEventSettingsFieldType extends FieldItemBase {
 
