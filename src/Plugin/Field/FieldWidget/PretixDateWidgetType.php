@@ -2,11 +2,12 @@
 
 namespace Drupal\itk_pretix\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Url;
+use Symfony\Component\Validator\ConstraintViolationInterface;
 
 /**
  * Plugin implementation of the 'pretix_date_widget_type' widget.
@@ -41,6 +42,7 @@ class PretixDateWidgetType extends WidgetBase {
       '#title' => t('Location'),
       '#default_value' => $item->location ?? '',
       '#size' => 45,
+      '#required' => TRUE,
     ];
     $element['address'] = [
       '#type' => 'search',
@@ -53,6 +55,7 @@ class PretixDateWidgetType extends WidgetBase {
         ],
       ],
       '#attributes' => ['class' => ['js-dawa-element']],
+      '#required' => TRUE,
     ];
 
     if ($item->time_from) {
@@ -67,6 +70,7 @@ class PretixDateWidgetType extends WidgetBase {
       '#date_date_format' => 'd/m/Y',
       '#date_time_format' => 'H:i',
       '#size' => 15,
+      '#required' => TRUE,
     ];
 
     if ($item->time_to) {
@@ -81,12 +85,14 @@ class PretixDateWidgetType extends WidgetBase {
       '#date_date_format' => 'd/m/Y',
       '#date_time_format' => 'H:i',
       '#size' => 15,
+      '#required' => TRUE,
     ];
     $element['spots'] = [
       '#type' => 'number',
       '#title' => t('Number of spots'),
       '#default_value' => $item->spots ?? NULL,
       '#size' => 3,
+      '#required' => TRUE,
     ];
 
     if (isset($item->uuid)) {
@@ -135,6 +141,19 @@ class PretixDateWidgetType extends WidgetBase {
    */
   private function roundedTime($seconds) {
     return round($seconds / 3600) * 3600;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function errorElement(
+    array $element,
+    ConstraintViolationInterface $error,
+    array $form,
+    FormStateInterface $form_state
+  ) {
+    $propertyPath = preg_replace('/^\d+\./', '', $error->getPropertyPath());
+    return $element[$propertyPath] ?? $element;
   }
 
 }

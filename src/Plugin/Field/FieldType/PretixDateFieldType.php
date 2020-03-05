@@ -8,6 +8,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\datetime\DateTimeComputed;
 use Nicoeg\Dawa\Dawa;
+use Symfony\Component\Validator\ConstraintViolation;
 
 /**
  * Plugin implementation of the 'pretix_date_field_type' field type.
@@ -17,7 +18,8 @@ use Nicoeg\Dawa\Dawa;
  *   label = @Translation("Pretix date field type"),
  *   description = @Translation("Provides values required by pretix API"),
  *   default_widget = "pretix_date_widget_type",
- *   default_formatter = "pretix_date_formatter_type"
+ *   default_formatter = "pretix_date_formatter_type",
+ *   constraints = {"PretixDateConstraint" = {}}
  * )
  *
  * @property string uuid
