@@ -10,14 +10,14 @@ use Drupal\Core\Url;
 use Symfony\Component\Validator\ConstraintViolationInterface;
 
 /**
- * Plugin implementation of the 'pretix_date_widget_type' widget.
+ * Plugin implementation of the 'pretix_date_widget' widget.
  *
  * @FieldWidget(
- *   id = "pretix_date_widget_type",
+ *   id = "pretix_date_widget",
  *   module = "itk_pretix",
- *   label = @Translation("Pretix date widget type"),
+ *   label = @Translation("pretix date widget"),
  *   field_types = {
- *     "pretix_date_field_type"
+ *     "pretix_date"
  *   }
  * )
  */

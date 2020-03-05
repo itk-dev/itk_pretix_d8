@@ -10,11 +10,11 @@ use Drupal\Core\Form\FormStateInterface;
  * Plugin implementation of the 'pretix_event_settings_widget_type' widget.
  *
  * @FieldWidget(
- *   id = "pretix_event_settings_widget_type",
+ *   id = "pretix_event_settings_widget",
  *   module = "itk_pretix",
  *   label = @Translation("pretix event settings"),
  *   field_types = {
- *     "pretix_event_settings_field_type"
+ *     "pretix_event_settings"
  *   }
  * )
  */

@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraint;
  * @Constraint(
  *   id = "PretixDateConstraint",
  *   label = @Translation("Pretix date constraint", context = "Validation"),
- *   type = "pretix_date_field_type"
+ *   type = "pretix_date"
  * )
  */
 class PretixDateConstraint extends Constraint {

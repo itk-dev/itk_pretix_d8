@@ -52,7 +52,7 @@ class NodeHelper {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function getDateItem(NodeInterface $node, string $uuid) {
-    $field = $this->getFieldByType($node, 'pretix_date_field_type');
+    $field = $this->getFieldByType($node, 'pretix_date');
 
     if (NULL !== $field) {
       foreach ($field as $item) {
@@ -97,7 +97,7 @@ class NodeHelper {
    *   A collection of template events.
    */
   public function getTemplateEvents(NodeInterface $node) {
-    $field = $this->getFieldByType($node, 'pretix_date_field_type');
+    $field = $this->getFieldByType($node, 'pretix_date');
     $dateCardinality = $field->getFieldDefinition()->getFieldStorageDefinition()->getCardinality();
     $events = [];
 
@@ -189,7 +189,7 @@ class NodeHelper {
    *   The cloned node.
    */
   public function clonedNodeAlter(NodeInterface $node) {
-    $dates = $this->getFieldByType($node, 'pretix_date_field_type');
+    $dates = $this->getFieldByType($node, 'pretix_date');
 
     if (NULL !== $dates) {
       /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate $date */
@@ -209,7 +209,7 @@ class NodeHelper {
    *   A list of dates if a pretix_date field exists on the node.
    */
   private function getPretixDates(NodeInterface $node) {
-    $items = $this->getFieldByType($node, 'pretix_date_field_type');
+    $items = $this->getFieldByType($node, 'pretix_date');
 
     if (NULL !== $items) {
       foreach ($items as $item) {
@@ -238,7 +238,7 @@ class NodeHelper {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function getPretixSettings(NodeInterface $node) {
-    $items = $this->getFieldByType($node, 'pretix_event_settings_field_type');
+    $items = $this->getFieldByType($node, 'pretix_event_settings');
 
     return NULL !== $items ? $items->first() : NULL;
   }

@@ -9,10 +9,10 @@ use Drupal\Core\Field\FormatterBase;
  * Plugin implementation of the 'pretix_date_formatter_type' formatter.
  *
  * @FieldFormatter(
- *   id = "pretix_date_formatter_type",
- *   label = @Translation("Pretix date formatter type"),
+ *   id = "pretix_date_formatter",
+ *   label = @Translation("pretix date formatter"),
  *   field_types = {
- *     "pretix_date_field_type"
+ *     "pretix_date"
  *   }
  * )
  */
