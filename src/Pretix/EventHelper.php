@@ -6,7 +6,7 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType;
+use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Client;
 use ItkDev\Pretix\Api\Entity\Event;
@@ -47,7 +47,7 @@ class EventHelper extends AbstractHelper {
 
     /** @var \Drupal\Core\Field\FieldItemListInterface $dates */
     $dates = $options['dates'] ?? NULL;
-    /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettingsFieldType $settings */
+    /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettings $settings */
     $settings = $options['settings'] ?? NULL;
 
     if (empty($dates)) {
@@ -169,7 +169,7 @@ class EventHelper extends AbstractHelper {
   /**
    * Synchronize pretix sub-event.
    *
-   * @param \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType $item
+   * @param \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate $item
    *   The item.
    * @param \ItkDev\Pretix\Api\Entity\Event $event
    *   The event.
@@ -183,7 +183,7 @@ class EventHelper extends AbstractHelper {
    *
    * @throws \Exception
    */
-  private function synchronizePretixSubEvent(PretixDateFieldType $item, Event $event, NodeInterface $node, Client $client) {
+  private function synchronizePretixSubEvent(PretixDate $item, Event $event, NodeInterface $node, Client $client) {
     $itemInfo = $this->loadPretixSubEventInfo($item, TRUE);
     $isNewItem = NULL === $itemInfo;
 
@@ -568,7 +568,7 @@ class EventHelper extends AbstractHelper {
    * @return string
    *   The event location.
    */
-  private function getLocation(PretixDateFieldType $item) {
+  private function getLocation(PretixDate $item) {
     return implode(PHP_EOL, array_filter([
       $item->location ?? NULL,
       $item->address ?? NULL,

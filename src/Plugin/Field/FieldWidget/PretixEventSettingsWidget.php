@@ -18,7 +18,7 @@ use Drupal\Core\Form\FormStateInterface;
  *   }
  * )
  */
-class PretixEventSettingsWidgetType extends WidgetBase {
+class PretixEventSettingsWidget extends WidgetBase {
 
   /**
    * {@inheritdoc}

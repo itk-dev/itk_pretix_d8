@@ -16,7 +16,7 @@ use Drupal\Core\Field\FormatterBase;
  *   }
  * )
  */
-class PretixDateFormatterType extends FormatterBase {
+class PretixDateFormatter extends FormatterBase {
 
   /**
    * {@inheritdoc}

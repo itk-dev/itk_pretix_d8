@@ -2,7 +2,7 @@
 
 namespace Drupal\itk_pretix\Plugin\Validation\Constraint;
 
-use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType;
+use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
@@ -17,7 +17,7 @@ class PretixDateConstraintValidator extends ConstraintValidator {
   public function validate($item, Constraint $constraint) {
     /** @var \Drupal\itk_pretix\Plugin\Validation\Constraint\PretixDateConstraint $constraint */
 
-    if (!$item instanceof PretixDateFieldType) {
+    if (!$item instanceof PretixDate) {
       return;
     }
 

@@ -5,7 +5,7 @@ namespace Drupal\itk_pretix\Pretix;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\itk_pretix\Exception\SynchronizeException;
-use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType;
+use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Client;
@@ -228,7 +228,7 @@ abstract class AbstractHelper {
    *
    * @throws \Exception
    */
-  public function addPretixSubEventInfo(PretixDateFieldType $item, SubEvent $subEvent, array $data, $reset = FALSE) {
+  public function addPretixSubEventInfo(PretixDate $item, SubEvent $subEvent, array $data, $reset = FALSE) {
     $info = $this->loadPretixSubEventInfo($item, TRUE);
     // The values to store in the database.
     $fields = [];
@@ -268,7 +268,7 @@ abstract class AbstractHelper {
   /**
    * Load pretix sub-event info from database.
    *
-   * @param array|PretixDateFieldType $item
+   * @param array|PretixDate $item
    *   The date item.
    * @param bool $reset
    *   If set, data will be read from database.
@@ -276,7 +276,7 @@ abstract class AbstractHelper {
    * @return array|null
    *   The sub-event data.
    */
-  public function loadPretixSubEventInfo(PretixDateFieldType $item, bool $reset = FALSE) {
+  public function loadPretixSubEventInfo(PretixDate $item, bool $reset = FALSE) {
     $info = &drupal_static(__METHOD__, []);
 
     if ($reset || !isset($info[$item->uuid])) {
@@ -377,7 +377,7 @@ abstract class AbstractHelper {
    * @param \ItkDev\Pretix\Api\Entity\SubEvent $subEvent
    *   The sub-event.
    *
-   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType|null
+   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate|null
    *   The date item.
    */
   public function loadDateItem(SubEvent $subEvent) {

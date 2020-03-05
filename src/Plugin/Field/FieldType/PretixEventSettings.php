@@ -20,7 +20,7 @@ use Drupal\Core\TypedData\DataDefinition;
  * @property string template_event
  * @property bool synchronize_event
  */
-class PretixEventSettingsFieldType extends FieldItemBase {
+class PretixEventSettings extends FieldItemBase {
 
   /**
    * {@inheritdoc}

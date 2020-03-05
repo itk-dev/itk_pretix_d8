@@ -46,7 +46,7 @@ class NodeHelper {
    * @param string $uuid
    *   The date item uuid.
    *
-   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType|null
+   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate|null
    *   The date item if any.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
@@ -192,7 +192,7 @@ class NodeHelper {
     $dates = $this->getFieldByType($node, 'pretix_date_field_type');
 
     if (NULL !== $dates) {
-      /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType $date */
+      /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate $date */
       foreach ($dates as $date) {
         $date->clonedNodeAlter();
       }
@@ -232,7 +232,7 @@ class NodeHelper {
    * @param \Drupal\node\NodeInterface $node
    *   The node.
    *
-   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettingsFieldType|null
+   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettings|null
    *   The settings if a pretix_event_settings field exists on the node.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException

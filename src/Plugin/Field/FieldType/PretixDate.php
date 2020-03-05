@@ -8,7 +8,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\datetime\DateTimeComputed;
 use Nicoeg\Dawa\Dawa;
-use Symfony\Component\Validator\ConstraintViolation;
 
 /**
  * Plugin implementation of the 'pretix_date_field_type' field type.
@@ -30,7 +29,7 @@ use Symfony\Component\Validator\ConstraintViolation;
  * @property int spots
  * @property array data
  */
-class PretixDateFieldType extends FieldItemBase {
+class PretixDate extends FieldItemBase {
 
   /**
    * {@inheritdoc}

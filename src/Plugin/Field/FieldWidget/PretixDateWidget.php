@@ -21,7 +21,7 @@ use Symfony\Component\Validator\ConstraintViolationInterface;
  *   }
  * )
  */
-class PretixDateWidgetType extends WidgetBase {
+class PretixDateWidget extends WidgetBase {
 
   /**
    * {@inheritdoc}
@@ -29,7 +29,7 @@ class PretixDateWidgetType extends WidgetBase {
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     /** @var \Drupal\itk_pretix\Pretix\EventHelper $eventHelper */
     $eventHelper = \Drupal::service('itk_pretix.event_helper');
-    /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType $item */
+    /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate $item */
     $item = $items[$delta];
 
     $element['uuid'] = [
