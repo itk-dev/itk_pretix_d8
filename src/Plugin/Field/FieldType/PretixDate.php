@@ -10,14 +10,15 @@ use Drupal\datetime\DateTimeComputed;
 use Nicoeg\Dawa\Dawa;
 
 /**
- * Plugin implementation of the 'pretix_date_field_type' field type.
+ * Plugin implementation of the 'pretix_date' field type.
  *
  * @FieldType(
- *   id = "pretix_date_field_type",
- *   label = @Translation("Pretix date field type"),
+ *   id = "pretix_date",
+ *   label = @Translation("Pretix date"),
  *   description = @Translation("Provides values required by pretix API"),
- *   default_widget = "pretix_date_widget_type",
- *   default_formatter = "pretix_date_formatter_type"
+ *   default_widget = "pretix_date_widget",
+ *   default_formatter = "pretix_date_formatter",
+ *   constraints = {"PretixDateConstraint" = {}}
  * )
  *
  * @property string uuid
@@ -28,7 +29,7 @@ use Nicoeg\Dawa\Dawa;
  * @property int spots
  * @property array data
  */
-class PretixDateFieldType extends FieldItemBase {
+class PretixDate extends FieldItemBase {
 
   /**
    * {@inheritdoc}

@@ -46,13 +46,13 @@ class NodeHelper {
    * @param string $uuid
    *   The date item uuid.
    *
-   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType|null
+   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate|null
    *   The date item if any.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function getDateItem(NodeInterface $node, string $uuid) {
-    $field = $this->getFieldByType($node, 'pretix_date_field_type');
+    $field = $this->getFieldByType($node, 'pretix_date');
 
     if (NULL !== $field) {
       foreach ($field as $item) {
@@ -97,7 +97,7 @@ class NodeHelper {
    *   A collection of template events.
    */
   public function getTemplateEvents(NodeInterface $node) {
-    $field = $this->getFieldByType($node, 'pretix_date_field_type');
+    $field = $this->getFieldByType($node, 'pretix_date');
     $dateCardinality = $field->getFieldDefinition()->getFieldStorageDefinition()->getCardinality();
     $events = [];
 
@@ -189,10 +189,10 @@ class NodeHelper {
    *   The cloned node.
    */
   public function clonedNodeAlter(NodeInterface $node) {
-    $dates = $this->getFieldByType($node, 'pretix_date_field_type');
+    $dates = $this->getFieldByType($node, 'pretix_date');
 
     if (NULL !== $dates) {
-      /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDateFieldType $date */
+      /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate $date */
       foreach ($dates as $date) {
         $date->clonedNodeAlter();
       }
@@ -209,7 +209,7 @@ class NodeHelper {
    *   A list of dates if a pretix_date field exists on the node.
    */
   private function getPretixDates(NodeInterface $node) {
-    $items = $this->getFieldByType($node, 'pretix_date_field_type');
+    $items = $this->getFieldByType($node, 'pretix_date');
 
     if (NULL !== $items) {
       foreach ($items as $item) {
@@ -232,13 +232,13 @@ class NodeHelper {
    * @param \Drupal\node\NodeInterface $node
    *   The node.
    *
-   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettingsFieldType|null
+   * @return \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettings|null
    *   The settings if a pretix_event_settings field exists on the node.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function getPretixSettings(NodeInterface $node) {
-    $items = $this->getFieldByType($node, 'pretix_event_settings_field_type');
+    $items = $this->getFieldByType($node, 'pretix_event_settings');
 
     return NULL !== $items ? $items->first() : NULL;
   }

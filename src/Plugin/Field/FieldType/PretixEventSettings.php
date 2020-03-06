@@ -8,19 +8,19 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 
 /**
- * Plugin implementation of the 'pretix_event_settings_field_type' field type.
+ * Plugin implementation of the 'pretix_event_settings' field type.
  *
  * @FieldType(
- *   id = "pretix_event_settings_field_type",
+ *   id = "pretix_event_settings",
  *   label = @Translation("pretix event settings"),
  *   description = @Translation("pretix event settings"),
- *   default_widget = "pretix_event_settings_widget_type"
+ *   default_widget = "pretix_event_settings_widget"
  * )
  *
  * @property string template_event
  * @property bool synchronize_event
  */
-class PretixEventSettingsFieldType extends FieldItemBase {
+class PretixEventSettings extends FieldItemBase {
 
   /**
    * {@inheritdoc}
