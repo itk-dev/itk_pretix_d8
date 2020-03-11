@@ -83,7 +83,13 @@ class PretixController extends ControllerBase {
       throw new BadRequestHttpException();
     }
     $eventInfo = $this->orderHelper->loadPretixEventInfo($node);
+    if (NULL === $eventInfo) {
+      throw new BadRequestHttpException('Cannot get event info');
+    }
     $subEventInfo = $this->orderHelper->loadPretixSubEventInfo($item);
+    if (NULL === $subEventInfo) {
+      throw new BadRequestHttpException('Cannot get sub-event info');
+    }
 
     $client = $this->eventHelper->getPretixClient($node);
     $event = $client->getEvent($eventInfo['pretix_event_slug']);
@@ -94,7 +100,7 @@ class PretixController extends ControllerBase {
       })->first();
 
     if (!$subEvent) {
-      throw new BadRequestHttpException();
+      throw new BadRequestHttpException('Cannot get sub-event');
     }
 
     $orders = $client->getOrders($event, ['subevent' => $subEvent]);
