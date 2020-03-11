@@ -96,7 +96,7 @@ class PretixDateWidget extends WidgetBase {
     ];
 
     if (isset($item->uuid)) {
-      $pretixOrdersListUrl = $item->getEntity()->id()
+      $pretixOrdersUrl = $item->getEntity()->id()
         ? Url::fromRoute('itk_pretix.pretix_orders_date',
           [
             'node' => $item->getEntity()->id(),
@@ -107,16 +107,83 @@ class PretixDateWidget extends WidgetBase {
         )
         : NULL;
 
-      $element['data'] = [
-        '#theme' => 'itk_pretix_date_data',
-        '#data' => array_merge(
-          $item->data ?? [],
-          $eventHelper->loadPretixSubEventInfo($item) ?? [],
-          [
-            'pretix_orders_list_url' => $pretixOrdersListUrl,
-          ]
-        ),
+      $element['pretix_links'] = [
+        '#type' => 'details',
+        '#title' => $this->t('pretix'),
       ];
+
+      $data = array_merge(
+        $item->data ?? [],
+        $eventHelper->loadPretixSubEventInfo($item) ?? []
+      );
+
+      if (isset($data['data']['pretix_subevent_url'])) {
+        $url = Url::fromUri($data['data']['pretix_subevent_url']);
+        $element['pretix_links']['pretix_subevent_url'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Pretix sub-event url'),
+          '#description' => $this->t('The pretix sub-event url'),
+          'value' => [
+            '#title' => $url->getUri(),
+            '#type' => 'link',
+            '#url' => $url,
+          ],
+        ];
+      }
+
+      if (isset($data['data']['pretix_subevent_shop_url'])) {
+        $url = Url::fromUri($data['data']['pretix_subevent_shop_url']);
+        $element['pretix_links']['pretix_subevent_shop_url'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Pretix sub-event shop url'),
+          '#description' => $this->t('The pretix sub-event shop url'),
+          'value' => [
+            '#title' => $url->getUri(),
+            '#type' => 'link',
+            '#url' => $url,
+          ],
+        ];
+      }
+
+      if (NULL !== $pretixOrdersUrl) {
+        $url = $pretixOrdersUrl;
+        $element['pretix_links']['pretix_orders_url'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Pretix orders'),
+          'value' => [
+            '#title' => $this->t('Show pretix orders'),
+            '#type' => 'link',
+            '#url' => $url,
+          ],
+        ];
+      }
+
+      // <div class="pretix-date-data">
+      //  {% set pretix_subevent_url = data.data.pretix_subevent_url|default(false)%}
+      //  {% if pretix_subevent_url %}
+      //    <a class="pretix-subevent-url" href="{{ pretix_subevent_url }}">{{ 'Show sub-event in pretix' }}</a>
+      //  {% endif %}
+      //
+      //  {% set pretix_subevent_shop_url = data.data.pretix_subevent_shop_url|default(false)%}
+      //  {% if pretix_subevent_shop_url %}
+      //    <a class="pretix-subevent-shop-url" href="{{ pretix_subevent_shop_url }}">{{ 'Show sub-event in pretix shop' }}</a>
+      //  {% endif %}
+      //
+      //  {% set pretix_orders_list_url = data.pretix_orders_list_url|default(false)%}
+      //  {% if pretix_orders_list_url %}
+      //    <a href="{{ pretix_orders_list_url }}">{{ 'Show pretix orders' }}</a>
+      //  {% endif %}
+      // </div>
+      //      $element['data'] = [
+      //        '#theme' => 'itk_pretix_date_data',
+      //        '#data' => array_merge(
+      //          $item->data ?? [],
+      //          $eventHelper->loadPretixSubEventInfo($item) ?? [],
+      //          [
+      //            'pretix_orders_list_url' => $pretixOrdersListUrl,
+      //          ]
+      //        ),
+      //      ];
     }
 
     // If cardinality is 1, ensure a label is output for the field by wrapping
