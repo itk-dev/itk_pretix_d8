@@ -50,13 +50,6 @@ class PretixEventSettingsWidget extends WidgetBase {
       $emptyOption = NULL;
     }
 
-    /** @var \Drupal\itk_pretix\Pretix\EventHelper $eventHelper */
-    $eventHelper = \Drupal::service('itk_pretix.event_helper');
-    $element['data'] = [
-      '#theme' => 'itk_pretix_event_data',
-      '#data' => $eventHelper->loadPretixEventInfo($node) ?? [],
-    ];
-
     $element['template_event'] = [
       '#type' => 'select',
       '#options' => $templateEventOptions,
@@ -80,7 +73,10 @@ class PretixEventSettingsWidget extends WidgetBase {
     if (1 === $this->fieldDefinition->getFieldStorageDefinition()->getCardinality()) {
       $element += [
         '#type' => 'details',
-        '#open' => TRUE,
+        // Collapse when editing a node.
+        '#open' => NULL === $node->id()
+          // Or when some value is not valid.
+        || count($items[$delta]->validate() ?? []) > 0,
       ];
     }
 
