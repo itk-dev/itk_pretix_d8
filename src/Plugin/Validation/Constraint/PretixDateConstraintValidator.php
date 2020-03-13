@@ -15,9 +15,7 @@ class PretixDateConstraintValidator extends ConstraintValidator {
    * {@inheritdoc}
    */
   public function validate($item, Constraint $constraint) {
-    /** @var \Drupal\itk_pretix\Plugin\Validation\Constraint\PretixDateConstraint $constraint */
-
-    if (!$item instanceof PretixDate) {
+    if (!$item instanceof PretixDate || !$constraint instanceof PretixDateConstraint) {
       return;
     }
 
@@ -29,7 +27,7 @@ class PretixDateConstraintValidator extends ConstraintValidator {
           '%time_to' => $timeTo->format(\DateTimeInterface::ATOM),
           '%time_from' => $timeFrom->format(\DateTimeInterface::ATOM),
         ])
-        ->atPath('time_to')
+        ->atPath('time_to_value')
         ->addViolation();
     }
   }

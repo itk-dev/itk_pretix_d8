@@ -129,7 +129,7 @@ class NodeHelper {
 
     if (NULL !== $dates) {
       $settings = $this->getPretixSettings($node);
-      if (!$settings->synchronize_event) {
+      if (NULL === $settings || !$settings->synchronize_event) {
         return;
       }
 

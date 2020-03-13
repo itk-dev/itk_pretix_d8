@@ -24,8 +24,8 @@ use Nicoeg\Dawa\Dawa;
  * @property string uuid
  * @property string location
  * @property string address
- * @property string|DateTimeComputed time_from
- * @property string|DateTimeComputed time_to
+ * @property DateTimeComputed time_from
+ * @property DateTimeComputed time_to
  * @property int spots
  * @property array data
  */
@@ -44,16 +44,27 @@ class PretixDate extends FieldItemBase {
     $properties['address'] = DataDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Address'))
       ->setRequired(TRUE);
+
+    $properties['time_from_value'] = DataDefinition::create('datetime_iso8601')
+      ->setLabel(t('Time from value'))
+      ->setRequired(TRUE);
     $properties['time_from'] = DataDefinition::create('any')
-      ->setLabel(new TranslatableMarkup('Start time'))
+      ->setLabel(t('Computed time from'))
+      ->setDescription(t('The computed time from DateTime object.'))
+      ->setComputed(TRUE)
       ->setClass(DateTimeComputed::class)
-      ->setSetting('date source', 'value')
+      ->setSetting('date source', 'time_from_value');
+
+    $properties['time_to_value'] = DataDefinition::create('datetime_iso8601')
+      ->setLabel(t('Time to value'))
       ->setRequired(TRUE);
     $properties['time_to'] = DataDefinition::create('any')
-      ->setLabel(new TranslatableMarkup('End time'))
+      ->setLabel(t('Computed time to'))
+      ->setDescription(t('The computed time to DateTime object.'))
+      ->setComputed(TRUE)
       ->setClass(DateTimeComputed::class)
-      ->setSetting('date source', 'value')
-      ->setRequired(TRUE);
+      ->setSetting('date source', 'time_to_value');
+
     $properties['spots'] = DataDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('Spots'))
       ->setRequired(TRUE);
@@ -80,13 +91,15 @@ class PretixDate extends FieldItemBase {
           'type' => 'varchar',
           'length' => 255,
         ],
-        'time_from' => [
+        'time_from_value' => [
+          'description' => 'The time from value.',
           'type' => 'varchar',
-          'length' => 128,
+          'length' => 20,
         ],
-        'time_to' => [
+        'time_to_value' => [
+          'description' => 'The time to value.',
           'type' => 'varchar',
-          'length' => 128,
+          'length' => 20,
         ],
         'spots' => [
           'type' => 'int',
@@ -113,8 +126,8 @@ class PretixDate extends FieldItemBase {
    */
   public function isEmpty() {
     $location = $this->get('location')->getValue();
-    $timeFrom = $this->get('time_from')->getValue();
-    $timeTo = $this->get('time_to')->getValue();
+    $timeFrom = $this->get('time_from_value')->getValue();
+    $timeTo = $this->get('time_to_value')->getValue();
     return empty($location) || empty($timeFrom) || empty($timeTo);
   }
 
