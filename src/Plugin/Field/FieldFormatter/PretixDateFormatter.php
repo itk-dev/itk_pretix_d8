@@ -4,6 +4,7 @@ namespace Drupal\itk_pretix\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
+use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate;
 
 /**
  * Plugin implementation of the 'pretix_date_formatter_type' formatter.
@@ -24,13 +25,21 @@ class PretixDateFormatter extends FormatterBase {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
 
-    // Sort descending by time_from.
-    $indexed = [];
-    foreach ($items as $item) {
-      $indexed[$item->time_from] = $item;
+    // @TODO Get this from widget settings.
+    $sortField = 'time_from';
+    $sortDirection = 'desc';
+
+    $items = iterator_to_array($items);
+    if (NULL !== $sortField) {
+      // Sort ascending.
+      usort($items, static function (PretixDate $a, PretixDate $b) use ($sortField) {
+        return $a->{$sortField} <=> $b->{$sortField};
+      });
+      // Reverse if requested.
+      if (0 === strcasecmp('desc', $sortDirection)) {
+        $items = array_reverse($items);
+      }
     }
-    krsort($indexed);
-    $items = array_values($indexed);
 
     foreach ($items as $delta => $item) {
       $elements[$delta] = [

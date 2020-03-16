@@ -7,6 +7,8 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItem;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Symfony\Component\Validator\ConstraintViolationInterface;
 
 /**
@@ -32,6 +34,8 @@ class PretixDateWidget extends WidgetBase {
     /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate $item */
     $item = $items[$delta];
 
+    $element['#element_validate'][] = [$this, 'validateTimes'];
+
     $element['uuid'] = [
       '#type' => 'hidden',
       '#default_value' => $item->uuid ?? '',
@@ -42,7 +46,7 @@ class PretixDateWidget extends WidgetBase {
       '#title' => t('Location'),
       '#default_value' => $item->location ?? '',
       '#size' => 45,
-      '#required' => TRUE,
+      '#required' => $element['#required'],
     ];
     $element['address'] = [
       '#type' => 'search',
@@ -55,44 +59,45 @@ class PretixDateWidget extends WidgetBase {
         ],
       ],
       '#attributes' => ['class' => ['js-dawa-element']],
-      '#required' => TRUE,
+      '#required' => $element['#required'],
     ];
 
-    if ($item->time_from) {
-      $datePartsFrom = explode(' ', $item->time_from);
-    }
-    $element['time_from'] = [
-      '#type' => 'datetime',
+    $element['time_from_value'] = [
       '#title' => t('Start time'),
-      '#default_value' => isset($datePartsFrom) ? DrupalDateTime::createFromFormat('Y-m-d H:i:s', $datePartsFrom[0] . ' ' . $datePartsFrom[1], $datePartsFrom[2]) : DrupalDateTime::createFromTimestamp($this->roundedTime(time())),
-      '#date_date_element' => 'date',
-      '#date_time_element' => 'time',
-      '#date_date_format' => 'd/m/Y',
-      '#date_time_format' => 'H:i',
-      '#size' => 15,
-      '#required' => TRUE,
+      '#type' => 'datetime',
+      '#default_value' => NULL,
+      '#date_increment' => 1,
+      '#date_timezone' => date_default_timezone_get(),
+      '#required' => $element['#required'],
     ];
 
-    if ($item->time_to) {
-      $datePartsTo = explode(' ', $item->time_to);
+    if ($items[$delta]->time_from) {
+      /** @var \Drupal\Core\Datetime\DrupalDateTime $time_from */
+      $time_from = $items[$delta]->time_from;
+      $element['time_from_value']['#default_value'] = $this->createDefaultValue($time_from, $element['time_from_value']['#date_timezone']);
     }
-    $element['time_to'] = [
-      '#type' => 'datetime',
+
+    $element['time_to_value'] = [
       '#title' => t('End time'),
-      '#default_value' => isset($datePartsTo) ? DrupalDateTime::createFromFormat('Y-m-d H:i:s', $datePartsTo[0] . ' ' . $datePartsTo[1], $datePartsTo[2]) : DrupalDateTime::createFromTimestamp($this->roundedTime(time())),
-      '#date_date_element' => 'date',
-      '#date_time_element' => 'time',
-      '#date_date_format' => 'd/m/Y',
-      '#date_time_format' => 'H:i',
-      '#size' => 15,
-      '#required' => TRUE,
+      '#type' => 'datetime',
+      '#default_value' => NULL,
+      '#date_increment' => 1,
+      '#date_timezone' => date_default_timezone_get(),
+      '#required' => $element['#required'],
     ];
+
+    if ($items[$delta]->time_to) {
+      /** @var \Drupal\Core\Datetime\DrupalDateTime $time_to */
+      $time_to = $items[$delta]->time_to;
+      $element['time_to_value']['#default_value'] = $this->createDefaultValue($time_to, $element['time_to_value']['#date_timezone']);
+    }
+
     $element['spots'] = [
       '#type' => 'number',
       '#title' => t('Number of spots'),
       '#default_value' => $item->spots ?? NULL,
       '#size' => 3,
-      '#required' => TRUE,
+      '#required' => $element['#required'],
     ];
 
     if (isset($item->uuid)) {
@@ -171,6 +176,38 @@ class PretixDateWidget extends WidgetBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
+    // The widget form element type has transformed the value to a
+    // DrupalDateTime object at this point. We need to convert it back to the
+    // storage timezone and format.
+    $storage_format = DateTimeItemInterface::DATETIME_STORAGE_FORMAT;
+    $storage_timezone = new \DateTimeZone(DateTimeItemInterface::STORAGE_TIMEZONE);
+    $user_timezone = new \DateTimeZone(date_default_timezone_get());
+
+    foreach ($values as &$item) {
+      if (!empty($item['time_from_value']) && $item['time_from_value'] instanceof DrupalDateTime) {
+        /** @var \Drupal\Core\Datetime\DrupalDateTime $time_from */
+        $time_from = $item['time_from_value'];
+
+        // Adjust the date for storage.
+        $item['time_from_value'] = $time_from->setTimezone($storage_timezone)->format($storage_format);
+      }
+
+      if (!empty($item['time_to_value']) && $item['time_to_value'] instanceof DrupalDateTime) {
+        /** @var \Drupal\Core\Datetime\DrupalDateTime $time_to */
+        $time_to = $item['time_to_value'];
+
+        // Adjust the date for storage.
+        $item['time_to_value'] = $time_to->setTimezone($storage_timezone)->format($storage_format);
+      }
+    }
+
+    return $values;
+  }
+
+  /**
    * Round seconds to nearest hour.
    *
    * @param int $seconds
@@ -194,6 +231,52 @@ class PretixDateWidget extends WidgetBase {
   ) {
     $propertyPath = preg_replace('/^\d+\./', '', $error->getPropertyPath());
     return $element[$propertyPath] ?? $element;
+  }
+
+  /**
+   * #element_validate callback to ensure that the start date <= the end date.
+   *
+   * @param array $element
+   *   An associative array containing the properties and children of the
+   *   generic form element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   * @param array $complete_form
+   *   The complete form structure.
+   */
+  public function validateTimes(array &$element, FormStateInterface $form_state, array &$complete_form) {
+    $time_from = $element['time_from_value']['#value']['object'];
+    $time_to = $element['time_to_value']['#value']['object'];
+
+    if ($time_from instanceof DrupalDateTime && $time_to instanceof DrupalDateTime) {
+      if ($time_to < $time_from) {
+        $form_state->setError($element['time_to_value'], $this->t('The end time cannot be before the start time'));
+      }
+    }
+  }
+
+  /**
+   * Creates a date object for use as a default value.
+   *
+   * This will take a default value, apply the proper timezone for display in
+   * a widget, and set the default time for date-only fields.
+   *
+   * @param \Drupal\Core\Datetime\DrupalDateTime $date
+   *   The UTC default date.
+   * @param string $timezone
+   *   The timezone to apply.
+   *
+   * @return \Drupal\Core\Datetime\DrupalDateTime
+   *   A date object for use as a default value in a field widget.
+   */
+  protected function createDefaultValue($date, $timezone) {
+    // The date was created and verified during field_load(), so it is safe to
+    // use without further inspection.
+    if ($this->getFieldSetting('datetime_type') === DateTimeItem::DATETIME_TYPE_DATE) {
+      $date->setDefaultDateTime();
+    }
+    $date->setTimezone(new \DateTimeZone($timezone));
+    return $date;
   }
 
 }
