@@ -96,7 +96,7 @@ class PretixDateWidget extends WidgetBase {
     ];
 
     if (isset($item->uuid)) {
-      $pretixOrdersListUrl = $item->getEntity()->id()
+      $pretixOrdersUrl = $item->getEntity()->id()
         ? Url::fromRoute('itk_pretix.pretix_orders_date',
           [
             'node' => $item->getEntity()->id(),
@@ -107,16 +107,56 @@ class PretixDateWidget extends WidgetBase {
         )
         : NULL;
 
-      $element['data'] = [
-        '#theme' => 'itk_pretix_date_data',
-        '#data' => array_merge(
-          $item->data ?? [],
-          $eventHelper->loadPretixSubEventInfo($item) ?? [],
-          [
-            'pretix_orders_list_url' => $pretixOrdersListUrl,
-          ]
-        ),
+      $element['pretix_links'] = [
+        '#type' => 'details',
+        '#title' => $this->t('pretix'),
       ];
+
+      $data = array_merge(
+        $item->data ?? [],
+        $eventHelper->loadPretixSubEventInfo($item) ?? []
+      );
+
+      if (isset($data['data']['pretix_subevent_url'])) {
+        $url = Url::fromUri($data['data']['pretix_subevent_url']);
+        $element['pretix_links']['pretix_subevent_url'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Pretix sub-event url'),
+          '#description' => $this->t('The pretix sub-event url'),
+          'value' => [
+            '#title' => $url->getUri(),
+            '#type' => 'link',
+            '#url' => $url,
+          ],
+        ];
+      }
+
+      if (isset($data['data']['pretix_subevent_shop_url'])) {
+        $url = Url::fromUri($data['data']['pretix_subevent_shop_url']);
+        $element['pretix_links']['pretix_subevent_shop_url'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Pretix sub-event shop url'),
+          '#description' => $this->t('The pretix sub-event shop url'),
+          'value' => [
+            '#title' => $url->getUri(),
+            '#type' => 'link',
+            '#url' => $url,
+          ],
+        ];
+      }
+
+      if (NULL !== $pretixOrdersUrl) {
+        $url = $pretixOrdersUrl;
+        $element['pretix_links']['pretix_orders_url'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Pretix orders'),
+          'value' => [
+            '#title' => $this->t('Show pretix orders'),
+            '#type' => 'link',
+            '#url' => $url,
+          ],
+        ];
+      }
     }
 
     // If cardinality is 1, ensure a label is output for the field by wrapping

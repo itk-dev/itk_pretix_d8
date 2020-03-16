@@ -7,7 +7,7 @@ require('es6-object-assign/auto');
 const dawaAutocomplete = require('dawa-autocomplete2');
 
 const buildDawaAutocompleteElements = (context) => {
-  const addresses = Array.from(context.querySelectorAll('.field--type-pretix-date-field-type .js-dawa-element'));
+  const addresses = Array.from(context.querySelectorAll('.field--type-pretix-date .js-dawa-element'));
   addresses.forEach(address => {
     // Check if dawa autocomplete has already been initialized.
     if ($(address).closest('.dawa-autocomplete-container').length > 0) {

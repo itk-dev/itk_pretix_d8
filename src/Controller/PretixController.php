@@ -5,6 +5,7 @@ namespace Drupal\itk_pretix\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
+use ItkDev\Pretix\Api\Collections\EntityCollectionInterface;
 use ItkDev\Pretix\Api\Entity\SubEvent;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -83,7 +84,13 @@ class PretixController extends ControllerBase {
       throw new BadRequestHttpException();
     }
     $eventInfo = $this->orderHelper->loadPretixEventInfo($node);
+    if (NULL === $eventInfo) {
+      throw new BadRequestHttpException('Cannot get event info');
+    }
     $subEventInfo = $this->orderHelper->loadPretixSubEventInfo($item);
+    if (NULL === $subEventInfo) {
+      throw new BadRequestHttpException('Cannot get sub-event info');
+    }
 
     $client = $this->eventHelper->getPretixClient($node);
     $event = $client->getEvent($eventInfo['pretix_event_slug']);
@@ -94,7 +101,7 @@ class PretixController extends ControllerBase {
       })->first();
 
     if (!$subEvent) {
-      throw new BadRequestHttpException();
+      throw new BadRequestHttpException('Cannot get sub-event');
     }
 
     $orders = $client->getOrders($event, ['subevent' => $subEvent]);
@@ -105,7 +112,7 @@ class PretixController extends ControllerBase {
       case 'csv':
         $encoder = new CsvEncoder();
         return new Response(
-          $encoder->encode($orderPositions->toArray(), 'csv'),
+          $encoder->encode($this->getExportData($orders), 'csv'),
           200,
           [
             'content-type' => 'text/csv',
@@ -114,7 +121,7 @@ class PretixController extends ControllerBase {
         );
 
       case 'json':
-        return new JsonResponse($orderPositions->toArray());
+        return new JsonResponse($this->getExportData($orders));
     }
 
     return [
@@ -135,6 +142,14 @@ class PretixController extends ControllerBase {
         ],
       ],
     ];
+  }
+
+  /**
+   * Get data for export.
+   */
+  private function getExportData(EntityCollectionInterface $orders): array {
+    // @TODO Do something useful here.
+    return $orders->toArray();
   }
 
 }

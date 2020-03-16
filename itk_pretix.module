@@ -30,10 +30,6 @@ function itk_pretix_help($route_name, RouteMatchInterface $route_match) {
  */
 function itk_pretix_theme() {
   return [
-    'itk_pretix_event_data' => [
-      'template' => 'itk-pretix-event-data',
-      'variables' => ['data' => NULL]
-    ],
     'itk_pretix_date_entry' => [
       'template' => 'itk-pretix-date-entry',
       'variables' => ['variables' => NULL]
