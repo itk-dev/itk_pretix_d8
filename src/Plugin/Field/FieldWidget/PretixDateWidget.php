@@ -157,33 +157,6 @@ class PretixDateWidget extends WidgetBase {
           ],
         ];
       }
-
-      // <div class="pretix-date-data">
-      //  {% set pretix_subevent_url = data.data.pretix_subevent_url|default(false)%}
-      //  {% if pretix_subevent_url %}
-      //    <a class="pretix-subevent-url" href="{{ pretix_subevent_url }}">{{ 'Show sub-event in pretix' }}</a>
-      //  {% endif %}
-      //
-      //  {% set pretix_subevent_shop_url = data.data.pretix_subevent_shop_url|default(false)%}
-      //  {% if pretix_subevent_shop_url %}
-      //    <a class="pretix-subevent-shop-url" href="{{ pretix_subevent_shop_url }}">{{ 'Show sub-event in pretix shop' }}</a>
-      //  {% endif %}
-      //
-      //  {% set pretix_orders_list_url = data.pretix_orders_list_url|default(false)%}
-      //  {% if pretix_orders_list_url %}
-      //    <a href="{{ pretix_orders_list_url }}">{{ 'Show pretix orders' }}</a>
-      //  {% endif %}
-      // </div>
-      //      $element['data'] = [
-      //        '#theme' => 'itk_pretix_date_data',
-      //        '#data' => array_merge(
-      //          $item->data ?? [],
-      //          $eventHelper->loadPretixSubEventInfo($item) ?? [],
-      //          [
-      //            'pretix_orders_list_url' => $pretixOrdersListUrl,
-      //          ]
-      //        ),
-      //      ];
     }
 
     // If cardinality is 1, ensure a label is output for the field by wrapping
