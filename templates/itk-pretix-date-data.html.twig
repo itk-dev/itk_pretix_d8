@@ -20,6 +20,6 @@
 
   {% set pretix_orders_list_url = data.pretix_orders_list_url|default(false)%}
   {% if pretix_orders_list_url %}
-    <a href="{{ pretix_orders_list_url }}">{{ 'Show pretix orders' }}</a>
+    <a class="pretix-order-list-url" href="{{ pretix_orders_list_url }}">{{ 'Show pretix orders' }}</a>
   {% endif %}
 </div>
