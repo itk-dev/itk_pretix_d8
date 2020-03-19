@@ -47,13 +47,14 @@ class EventHelper extends AbstractHelper {
 
     /** @var \Drupal\Core\Field\FieldItemListInterface $dates */
     $dates = $options['dates'] ?? NULL;
-    /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettings $settings */
-    $settings = $options['settings'] ?? NULL;
-
-    if (empty($dates)) {
+    if (NULL === $dates || $dates->isEmpty()) {
       throw $this->clientException($this->t('No dates specified'));
     }
-
+    /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixEventSettings $settings */
+    $settings = $options['settings'] ?? NULL;
+    if (NULL === $settings) {
+      throw $this->clientException($this->t('No settings specified'));
+    }
     if (!isset($settings->template_event)) {
       throw $this->clientException($this->t('No template event specified'));
     }
