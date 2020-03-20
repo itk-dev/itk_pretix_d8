@@ -125,14 +125,13 @@ class NodeHelper {
    *   The action triggering the synchronization.
    */
   public function synchronizeEvent(NodeInterface $node, string $action) {
+    $settings = $this->getPretixSettings($node);
+    if (NULL === $settings || !$settings->synchronize_event) {
+      return;
+    }
+
     $dates = $this->getPretixDates($node);
-
-    if (NULL !== $dates) {
-      $settings = $this->getPretixSettings($node);
-      if (NULL === $settings || !$settings->synchronize_event) {
-        return;
-      }
-
+    if (NULL !== $dates && !$dates->isEmpty()) {
       try {
         $this->eventHelper->syncronizePretixEvent(
           $node,
