@@ -34,7 +34,7 @@ class PretixDateWidget extends WidgetBase {
     /** @var \Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate $item */
     $item = $items[$delta];
 
-    $element['#element_validate'][] = [$this, 'validateTimes'];
+    $element['#element_validate'][] = [$this, 'validate'];
 
     $element['uuid'] = [
       '#type' => 'hidden',
@@ -98,6 +98,8 @@ class PretixDateWidget extends WidgetBase {
       '#default_value' => $item->spots ?? NULL,
       '#size' => 3,
       '#required' => $element['#required'],
+      '#min' => $this->getSetting('spots_min'),
+      '#max' => $this->getSetting('spots_max'),
     ];
 
     if (isset($item->uuid)) {
@@ -208,6 +210,50 @@ class PretixDateWidget extends WidgetBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public static function defaultSettings() {
+    return [
+      'spots_min' => 1,
+      'spots_max' => NULL,
+    ] + parent::defaultSettings();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsForm(array $form, FormStateInterface $form_state) {
+    $element['spots_min'] = [
+      '#title' => $this->t('Sports min'),
+      '#type' => 'number',
+      '#min' => 1,
+      '#required' => TRUE,
+      '#default_value' => $this->getSetting('spots_min'),
+    ];
+
+    $element['spots_max'] = [
+      '#title' => $this->t('Sports max'),
+      '#type' => 'number',
+      '#min' => 1,
+      '#default_value' => $this->getSetting('spots_max'),
+    ];
+
+    return $element;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsSummary() {
+    $summary[] = $this->t('Spots: @min-@max', [
+      '@min' => $this->getSetting('spots_min'),
+      '@max' => $this->getSetting('spots_max'),
+    ]);
+
+    return $summary;
+  }
+
+  /**
    * Round seconds to nearest hour.
    *
    * @param int $seconds
@@ -234,7 +280,9 @@ class PretixDateWidget extends WidgetBase {
   }
 
   /**
-   * #element_validate callback to ensure that the start date <= the end date.
+   * #element_validate callback to ensure that
+   *   the start date <= the end date.
+   *   the number of spots are positive.
    *
    * @param array $element
    *   An associative array containing the properties and children of the
@@ -244,14 +292,12 @@ class PretixDateWidget extends WidgetBase {
    * @param array $complete_form
    *   The complete form structure.
    */
-  public function validateTimes(array &$element, FormStateInterface $form_state, array &$complete_form) {
+  public function validate(array &$element, FormStateInterface $form_state, array &$complete_form) {
     $time_from = $element['time_from_value']['#value']['object'];
     $time_to = $element['time_to_value']['#value']['object'];
 
-    if ($time_from instanceof DrupalDateTime && $time_to instanceof DrupalDateTime) {
-      if ($time_to < $time_from) {
-        $form_state->setError($element['time_to_value'], $this->t('The end time cannot be before the start time'));
-      }
+    if ($time_from instanceof DrupalDateTime && $time_to instanceof DrupalDateTime && $time_to < $time_from) {
+      $form_state->setError($element['time_to_value'], $this->t('The end time cannot be before the start time'));
     }
   }
 
