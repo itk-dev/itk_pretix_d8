@@ -25,26 +25,28 @@ class PretixDateFormatter extends FormatterBase {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
 
+    $dates = iterator_to_array($items);
+
     // @TODO Get this from widget settings.
     $sortField = 'time_from';
     $sortDirection = 'desc';
 
-    $items = iterator_to_array($items);
     if (NULL !== $sortField) {
       // Sort ascending.
-      usort($items, static function (PretixDate $a, PretixDate $b) use ($sortField) {
+      usort($dates, static function (PretixDate $a, PretixDate $b) use ($sortField) {
         return $a->{$sortField} <=> $b->{$sortField};
       });
       // Reverse if requested.
       if (0 === strcasecmp('desc', $sortDirection)) {
-        $items = array_reverse($items);
+        $dates = array_reverse($dates);
       }
     }
 
-    foreach ($items as $delta => $item) {
+    foreach ($dates as $delta => $item) {
       $elements[$delta] = [
         '#theme' => 'itk_pretix_date_entry',
         '#variables' => [
+          'entity' => $items->getEntity(),
           'location' => $item->location,
           'address' => $item->address,
           'time_from' => $item->time_from,
