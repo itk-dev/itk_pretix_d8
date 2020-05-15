@@ -153,6 +153,10 @@ class NodeHelper {
       ]));
 
       $live = $node->isPublished();
+
+      // Allow modules to change shop state.
+      \Drupal::moduleHandler()->alter('itk_pretix_shop_live', $live, $node);
+
       try {
         $result = $this->eventHelper->setEventLive($node, $live);
 
