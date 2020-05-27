@@ -6,6 +6,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Collections\EntityCollectionInterface;
+use ItkDev\Pretix\Api\Entity\Order;
 use ItkDev\Pretix\Api\Entity\SubEvent;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -148,8 +149,18 @@ class PretixController extends ControllerBase {
    * Get data for export.
    */
   private function getExportData(EntityCollectionInterface $orders): array {
-    // @TODO Do something useful here.
-    return $orders->toArray();
+    // Create a list with an entry for each order position.
+    return array_merge(...$orders->map(static function (Order $order) {
+      return $order->getPositions()->map(static function (Order\Position $position) use ($order) {
+        return [
+          'Order code' => $order->getCode(),
+          'Name' => $position->getAttendeeName(),
+          'Email' => $position->getAttendeeEmail() ?? $order->getEmail(),
+          'Price' => $position->getPrice(),
+          'Url' => $order->getUrl(),
+        ];
+      });
+    })->toArray());
   }
 
 }

@@ -28,10 +28,10 @@
   <table class="table">
     <thead>
       <tr>
-        <th>{{ 'Order'|t }}</th>
-        <th>{{ 'Name'|t }}</th>
-        <th>{{ 'Email'|t }}</th>
-        <th>{{ 'Price'|t }}</th>
+        <th>{{ 'Order code'|t({}, {context: 'itk_pretix'}) }}</th>
+        <th>{{ 'Name'|t({}, {context: 'itk_pretix'}) }}</th>
+        <th>{{ 'Email'|t({}, {context: 'itk_pretix'}) }}</th>
+        <th>{{ 'Price'|t({}, {context: 'itk_pretix'}) }}</th>
       </tr>
     </thead>
     <tbody>
@@ -39,9 +39,9 @@
         {% set order_url = order.getUrl %}
         {% for position in order.getPositions %}
           <tr>
-            <td><a href="{{  order_url }} ">{{ position.getOrder }}/{{ position.getSubevent }}</a></td>
+            <td><a href="{{ order_url }}">{{ position.getOrder }}</a></td>
             <td>{{ position.getAttendeeName|default('–') }}</td>
-            <td>{{ position.getAttendeeEmail|default('–') }}</td>
+            <td>{{ position.getAttendeeEmail|default(order.getEmail|default('–')) }}</td>
             <td>{{ position.getPrice }}</td>
           </tr>
         {% endfor %}
