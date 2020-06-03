@@ -335,6 +335,12 @@ class EventHelper extends AbstractHelper {
     ];
   }
 
+  public function isEventLive(NodeInterface $node) {
+    $info = $this->loadPretixEventInfo($node);
+
+    return $info['data']['event']['live'] ?? false;
+  }
+
   /**
    * Set event live (or not) in pretix.
    *
