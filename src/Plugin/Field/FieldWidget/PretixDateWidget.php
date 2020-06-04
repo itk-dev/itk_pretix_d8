@@ -62,34 +62,78 @@ class PretixDateWidget extends WidgetBase {
       '#required' => $element['#required'],
     ];
 
-    $element['time_from_value'] = [
-      '#title' => t('Start time'),
-      '#type' => 'datetime',
-      '#default_value' => NULL,
-      '#date_increment' => 1,
-      '#date_timezone' => date_default_timezone_get(),
-      '#required' => $element['#required'],
-    ];
+    $time_from = $items[$delta]->time_from ?? NULL;
+    $time_to = $items[$delta]->time_from ?? NULL;
 
-    if ($items[$delta]->time_from) {
-      /** @var \Drupal\Core\Datetime\DrupalDateTime $time_from */
-      $time_from = $items[$delta]->time_from;
-      $element['time_from_value']['#default_value'] = $this->createDefaultValue($time_from, $element['time_from_value']['#date_timezone']);
+    if ($this->useSingleDate()) {
+      $element['date_value'] = [
+        '#title' => t('Date'),
+        '#type' => 'datetime',
+        '#date_time_element' => 'none', // hide date element
+        '#default_value' => NULL,
+        '#date_increment' => 1,
+        '#date_timezone' => date_default_timezone_get(),
+        '#required' => $element['#required'],
+      ];
+      if ($time_from) {
+        $element['date_value']['#default_value'] = $this->createDefaultValue($time_from, $element['date_value']['#date_timezone']);
+      }
+
+      $element['start_time_value'] = [
+        '#title' => t('Start time'),
+        '#type' => 'datetime',
+        '#date_date_element' => 'none', // hide date element
+        '#default_value' => NULL,
+        '#date_increment' => 1,
+        '#date_timezone' => date_default_timezone_get(),
+        '#required' => $element['#required'],
+      ];
+
+      if ($time_from) {
+        $element['start_time_value']['#default_value'] = $this->createDefaultValue($time_from, $element['start_time_value']['#date_timezone']);
+      }
+
+      $element['end_time_value'] = [
+        '#title' => t('End time'),
+        '#type' => 'datetime',
+        '#date_date_element' => 'none', // hide date element
+        '#default_value' => NULL,
+        '#date_increment' => 1,
+        '#date_timezone' => date_default_timezone_get(),
+        '#required' => $element['#required'],
+      ];
+
+      if ($time_to) {
+        $element['end_time_value']['#default_value'] = $this->createDefaultValue($time_to, $element['end_time_value']['#date_timezone']);
+      }
+
     }
+    else {
+      $element['time_from_value'] = [
+        '#title' => t('Start time'),
+        '#type' => 'datetime',
+        '#default_value' => NULL,
+        '#date_increment' => 1,
+        '#date_timezone' => date_default_timezone_get(),
+        '#required' => $element['#required'],
+      ];
 
-    $element['time_to_value'] = [
-      '#title' => t('End time'),
-      '#type' => 'datetime',
-      '#default_value' => NULL,
-      '#date_increment' => 1,
-      '#date_timezone' => date_default_timezone_get(),
-      '#required' => $element['#required'],
-    ];
+      if ($time_from) {
+        $element['time_from_value']['#default_value'] = $this->createDefaultValue($time_from, $element['time_from_value']['#date_timezone']);
+      }
 
-    if ($items[$delta]->time_to) {
-      /** @var \Drupal\Core\Datetime\DrupalDateTime $time_to */
-      $time_to = $items[$delta]->time_to;
-      $element['time_to_value']['#default_value'] = $this->createDefaultValue($time_to, $element['time_to_value']['#date_timezone']);
+      $element['time_to_value'] = [
+        '#title' => t('End time'),
+        '#type' => 'datetime',
+        '#default_value' => NULL,
+        '#date_increment' => 1,
+        '#date_timezone' => date_default_timezone_get(),
+        '#required' => $element['#required'],
+      ];
+
+      if ($time_to) {
+        $element['time_to_value']['#default_value'] = $this->createDefaultValue($time_to, $element['time_to_value']['#date_timezone']);
+      }
     }
 
     $element['spots'] = [
@@ -189,6 +233,24 @@ class PretixDateWidget extends WidgetBase {
     $user_timezone = new \DateTimeZone(date_default_timezone_get());
 
     foreach ($values as &$item) {
+
+      if ($this->useSingleDate()) {
+        if (isset($item['date_value'], $item['start_time_value'], $item['end_time_value'])
+            && $item['date_value'] instanceof DrupalDateTime
+            && $item['start_time_value'] instanceof DrupalDateTime
+            && $item['end_time_value'] instanceof DrupalDateTime) {
+          $timeFrom = clone $item['date_value'];
+          [$hours, $minutes, $seconds] = array_map('intval', explode(':', $item['start_time_value']->format('H:i:s')));
+          $timeFrom->setTime($hours, $minutes, $seconds);
+          $item['time_from_value'] = $timeFrom;
+
+          $timeTo = clone $item['date_value'];
+          [$hours, $minutes, $seconds] = array_map('intval', explode(':', $item['end_time_value']->format('H:i:s')));
+          $timeTo->setTime($hours, $minutes, $seconds);
+          $item['time_to_value'] = $timeTo;
+        }
+      }
+
       if (!empty($item['time_from_value']) && $item['time_from_value'] instanceof DrupalDateTime) {
         /** @var \Drupal\Core\Datetime\DrupalDateTime $time_from */
         $time_from = $item['time_from_value'];
@@ -214,6 +276,7 @@ class PretixDateWidget extends WidgetBase {
    */
   public static function defaultSettings() {
     return [
+      'use_end_date' => FALSE,
       'spots_min' => 1,
       'spots_max' => NULL,
     ] + parent::defaultSettings();
@@ -223,8 +286,14 @@ class PretixDateWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
+    $element['use_end_date'] = [
+      '#title' => $this->t('Use end date'),
+      '#type' => 'checkbox',
+      '#default_value' => $this->getSetting('use_end_date'),
+    ];
+
     $element['spots_min'] = [
-      '#title' => $this->t('Sports min'),
+      '#title' => $this->t('Spots min'),
       '#type' => 'number',
       '#min' => 1,
       '#required' => TRUE,
@@ -232,7 +301,7 @@ class PretixDateWidget extends WidgetBase {
     ];
 
     $element['spots_max'] = [
-      '#title' => $this->t('Sports max'),
+      '#title' => $this->t('Spots max'),
       '#type' => 'number',
       '#min' => 1,
       '#default_value' => $this->getSetting('spots_max'),
@@ -245,6 +314,10 @@ class PretixDateWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public function settingsSummary() {
+    if ($this->getSetting('use_end_date')) {
+      $summary[] = $this->t('Use end date');
+    }
+
     $summary[] = $this->t('Spots: @min-@max', [
       '@min' => $this->getSetting('spots_min'),
       '@max' => $this->getSetting('spots_max'),
@@ -323,6 +396,11 @@ class PretixDateWidget extends WidgetBase {
     }
     $date->setTimezone(new \DateTimeZone($timezone));
     return $date;
+  }
+
+  private function useSingleDate() {
+    header('content-type: text/plain'); echo var_export(['settings' => $this->getSettings()], true); die(__FILE__.':'.__LINE__.':'.__METHOD__);
+    return TRUE !== $this->getSetting('use_end_date');
   }
 
 }
