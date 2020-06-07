@@ -224,7 +224,7 @@ class PretixDateWidget extends WidgetBase {
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $element['spots_min'] = [
-      '#title' => $this->t('Sports min'),
+      '#title' => $this->t('Spots min'),
       '#type' => 'number',
       '#min' => 1,
       '#required' => TRUE,
@@ -232,7 +232,7 @@ class PretixDateWidget extends WidgetBase {
     ];
 
     $element['spots_max'] = [
-      '#title' => $this->t('Sports max'),
+      '#title' => $this->t('Spots max'),
       '#type' => 'number',
       '#min' => 1,
       '#default_value' => $this->getSetting('spots_max'),
