@@ -2,6 +2,7 @@
 
 namespace Drupal\itk_pretix\Controller;
 
+use Order\Position;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
@@ -151,7 +152,7 @@ class PretixController extends ControllerBase {
   private function getExportData(EntityCollectionInterface $orders): array {
     // Create a list with an entry for each order position.
     return array_merge(...$orders->map(static function (Order $order) {
-      return $order->getPositions()->map(static function (Order\Position $position) use ($order) {
+      return $order->getPositions()->map(static function (Position $position) use ($order) {
         return [
           'Order code' => $order->getCode(),
           'Name' => $position->getAttendeeName(),

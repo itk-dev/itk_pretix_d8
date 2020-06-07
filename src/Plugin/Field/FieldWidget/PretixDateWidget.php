@@ -280,9 +280,10 @@ class PretixDateWidget extends WidgetBase {
   }
 
   /**
-   * #element_validate callback to ensure that
-   *   the start date <= the end date.
-   *   the number of spots are positive.
+   * Element validate callback.
+   *
+   * Ensures that
+   *   * the start date <= the end date.
    *
    * @param array $element
    *   An associative array containing the properties and children of the
@@ -315,7 +316,7 @@ class PretixDateWidget extends WidgetBase {
    * @return \Drupal\Core\Datetime\DrupalDateTime
    *   A date object for use as a default value in a field widget.
    */
-  protected function createDefaultValue($date, $timezone) {
+  protected function createDefaultValue(DrupalDateTime $date, $timezone) {
     // The date was created and verified during field_load(), so it is safe to
     // use without further inspection.
     if ($this->getFieldSetting('datetime_type') === DateTimeItem::DATETIME_TYPE_DATE) {

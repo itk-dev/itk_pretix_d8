@@ -14,6 +14,11 @@ use Symfony\Component\Validator\Constraint;
  * )
  */
 class PretixDateConstraint extends Constraint {
+  /**
+   * Validate error message.
+   *
+   * @var string
+   */
   public $timeToBeforeTimeFrom = 'The end time cannot be before the start time';
 
 }

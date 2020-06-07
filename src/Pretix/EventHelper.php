@@ -335,10 +335,13 @@ class EventHelper extends AbstractHelper {
     ];
   }
 
+  /**
+   * Decide if pretix event shop is live (using local data).
+   */
   public function isEventLive(NodeInterface $node) {
     $info = $this->loadPretixEventInfo($node);
 
-    return $info['data']['event']['live'] ?? false;
+    return $info['data']['event']['live'] ?? FALSE;
   }
 
   /**
