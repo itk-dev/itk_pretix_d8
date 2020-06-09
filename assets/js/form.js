@@ -1,3 +1,5 @@
+import '../css/form.scss';
+
 const $ = require('jquery');
 require('jquery-validation');
 import 'dawa-autocomplete2/css/dawa-autocomplete2.css';
@@ -31,12 +33,28 @@ const buildDawaAutocompleteElements = (context) => {
   })
 }
 
+const buildDateControls = (context) => {
+  $('.pretix-date-widget.hide-end-date').each(function() {
+    const $this = $(this)
+    const $startDate = $(this).find('input[name*="[time_from_value][date]"]')
+    const $endDate = $(this).find('input[name*="[time_to_value][date]"]')
+    $startDate.on('change', function() {
+      if ($this.hasClass('end-date-hidden')) {
+        $endDate.val($(this).val())
+      }
+    })
+    $this.addClass('end-date-hidden')
+  })
+}
+
 $(() => {
   Drupal.behaviors.itk_pretix_dawa = {
     attach: (context, settings) => {
       buildDawaAutocompleteElements(context);
+      buildDateControls(context);
     }
   }
 
   buildDawaAutocompleteElements(document)
+  buildDateControls(document)
 });
