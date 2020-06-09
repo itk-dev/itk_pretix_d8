@@ -66,3 +66,17 @@ Apply the coding standards by running
 ```sh
 composer apply-coding-standards
 ```
+
+### Assets
+
+Check the coding standards in assets by running
+
+```sh
+yarn coding-standards-check
+```
+
+Apply the coding standards by running
+
+```sh
+yarn coding-standards-apply
+```

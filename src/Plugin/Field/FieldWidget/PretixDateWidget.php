@@ -35,6 +35,11 @@ class PretixDateWidget extends WidgetBase {
     $item = $items[$delta];
 
     $element['#element_validate'][] = [$this, 'validate'];
+    $element['#attributes']['class'][] = 'pretix-date-widget';
+    if ($this->hideEndDate()) {
+      $element['#attributes']['class'][] = 'hide-end-date';
+    }
+    $element['#attached']['library'][] = 'itk_pretix/date';
 
     $element['uuid'] = [
       '#type' => 'hidden',
@@ -214,6 +219,7 @@ class PretixDateWidget extends WidgetBase {
    */
   public static function defaultSettings() {
     return [
+      'hide_end_date' => FALSE,
       'spots_min' => 1,
       'spots_max' => NULL,
     ] + parent::defaultSettings();
@@ -223,6 +229,12 @@ class PretixDateWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
+    $element['hide_end_date'] = [
+      '#title' => $this->t('Hide end date'),
+      '#type' => 'checkbox',
+      '#default_value' => $this->getSetting('hide_end_date'),
+    ];
+
     $element['spots_min'] = [
       '#title' => $this->t('Spots min'),
       '#type' => 'number',
@@ -245,6 +257,10 @@ class PretixDateWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public function settingsSummary() {
+    if ($this->hideEndDate()) {
+      $summary[] = $this->t('Hide end date');
+    }
+
     $summary[] = $this->t('Spots: @min-@max', [
       '@min' => $this->getSetting('spots_min'),
       '@max' => $this->getSetting('spots_max'),
@@ -324,6 +340,13 @@ class PretixDateWidget extends WidgetBase {
     }
     $date->setTimezone(new \DateTimeZone($timezone));
     return $date;
+  }
+
+  /**
+   * Decide if end date should be hidden.
+   */
+  private function hideEndDate() {
+    return TRUE === $this->getSetting('hide_end_date');
   }
 
 }
