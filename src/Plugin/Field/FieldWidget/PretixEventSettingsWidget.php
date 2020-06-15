@@ -57,7 +57,7 @@ class PretixEventSettingsWidget extends WidgetBase {
       '#description' => $this->t('Select the template event to clone when creating the pretix event'),
       '#default_value' => $defaultValue,
       '#empty_option' => $emptyOption,
-      '#required' => !empty($templateEventOptions),
+      '#required' => $element['#required'] && !empty($templateEventOptions),
     ];
 
     $element['synchronize_event'] = [
