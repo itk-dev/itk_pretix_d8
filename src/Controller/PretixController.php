@@ -2,12 +2,12 @@
 
 namespace Drupal\itk_pretix\Controller;
 
-use Order\Position;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Collections\EntityCollectionInterface;
 use ItkDev\Pretix\Api\Entity\Order;
+use ItkDev\Pretix\Api\Entity\Order\Position;
 use ItkDev\Pretix\Api\Entity\SubEvent;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
