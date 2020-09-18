@@ -113,7 +113,7 @@ class PretixController extends ControllerBase {
       throw new BadRequestHttpException('Cannot get sub-event');
     }
 
-    $orders = $client->getOrders($event, ['subevent' => $subEvent]);
+    $orders = $client->getOrders($event, ['subevent' => $subEvent], ['fetch_all' => TRUE]);
 
     $format = $request->getRequestFormat();
     $filename = sprintf('event.%s', $format);
