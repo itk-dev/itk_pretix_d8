@@ -5,6 +5,7 @@ namespace Drupal\itk_pretix\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
+use Drupal\user\Entity\User;
 use ItkDev\Pretix\Api\Collections\EntityCollectionInterface;
 use ItkDev\Pretix\Api\Entity\Order;
 use ItkDev\Pretix\Api\Entity\Order\Position;
@@ -13,6 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Encoder\CsvEncoder;
 
@@ -81,6 +83,11 @@ class PretixController extends ControllerBase {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function ordersDate(Request $request, NodeInterface $node, string $uuid) {
+    $user = User::load(\Drupal::currentUser()->id());
+    if (!$node->access('update', $user)) {
+      throw new AccessDeniedHttpException();
+    }
+
     $item = $this->nodeHelper->getDateItem($node, $uuid);
     if (NULL === $item) {
       throw new BadRequestHttpException();
