@@ -39,7 +39,7 @@
         {% set order_url = order.getUrl %}
         {% for position in order.getPositions %}
           <tr>
-            <td><a href="{{ order_url }}">{{ position.getOrder }}</a></td>
+            <td>{{ position.getOrder }}</td>
             <td>{{ position.getAttendeeName|default('–') }}</td>
             <td>{{ position.getAttendeeEmail|default(order.getEmail|default('–')) }}</td>
             <td>{{ position.getPrice }}</td>
