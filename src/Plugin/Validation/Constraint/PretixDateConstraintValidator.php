@@ -21,7 +21,7 @@ class PretixDateConstraintValidator extends ConstraintValidator {
 
     $timeFrom = $item->time_from;
     $timeTo = $item->time_to;
-    if ($timeTo < $timeFrom) {
+    if ($timeTo && $timeFrom && $timeTo < $timeFrom) {
       $this->context
         ->buildViolation($constraint->timeToBeforeTimeFrom, [
           '%time_to' => $timeTo->format(\DateTimeInterface::ATOM),
