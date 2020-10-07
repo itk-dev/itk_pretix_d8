@@ -308,9 +308,23 @@ class EventHelper extends AbstractHelper {
       ]);
       try {
         $quota = $client->createQuota($event, $quotaData);
+        $quotas->add($quota);
       }
       catch (\Exception $exception) {
         throw $this->clientException($this->t('Cannot create quota for sub-event'), $exception);
+      }
+    }
+
+    // We only and always use the first quota.
+    if ($quota = $quotas->first()) {
+      $quotaData = array_merge($quota->toArray(), [
+        'size' => (int) $item->spots,
+      ]);
+      try {
+        $quota = $client->updateQuota($event, $quota, $quotaData);
+      }
+      catch (\Exception $exception) {
+        throw $this->clientException($this->t('Cannot update quota for sub-event'), $exception);
       }
     }
 
