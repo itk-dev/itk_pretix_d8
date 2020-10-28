@@ -16,6 +16,8 @@ use ItkDev\Pretix\Api\Entity\Quota;
  * Pretix helper.
  */
 class EventHelper extends AbstractHelper {
+  public const DATETIME_FORMAT = \DateTime::ATOM;
+
   /**
    * The order helper.
    *
@@ -74,6 +76,12 @@ class EventHelper extends AbstractHelper {
       'is_public' => $node->isPublished(),
       'location' => ['en' => $location],
     ];
+
+    // Allow modules to change event data.
+    $context = [
+      'is_new_event' => $isNewEvent,
+    ];
+    \Drupal::moduleHandler()->alter('itk_pretix_event_data', $data, $node, $context);
 
     $eventData = [];
     if ($isNewEvent) {
@@ -254,8 +262,16 @@ class EventHelper extends AbstractHelper {
     $price = 0;
     $data['item_price_overrides'][0]['price'] = $price;
 
+    // Allow modules to change sub-event data.
+    $context = [
+      'is_new_subevent' => $isNewItem,
+      'event' => $event,
+      'pretix_date' => $item,
+    ];
+    \Drupal::moduleHandler()->alter('itk_pretix_subevent_data', $data, $node, $context);
+
     // Important: meta_data value must be an object!
-    $data['meta_data'] = (object) [];
+    $data['meta_data'] = (object) ($data['meta_data'] ?? []);
     $subEventData = [];
     if ($isNewItem) {
       try {
@@ -644,7 +660,7 @@ class EventHelper extends AbstractHelper {
   private function formatDate($date = NULL) {
     $date = $this->getDate($date);
 
-    return NULL === $date ? NULL : $date->format(\DateTime::ATOM);
+    return NULL === $date ? NULL : $date->format(self::DATETIME_FORMAT);
   }
 
 }
