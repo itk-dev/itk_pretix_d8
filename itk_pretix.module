@@ -48,6 +48,13 @@ function itk_pretix_theme() {
         'exports' => NULL,
       ],
     ],
+    'itk_pretix_event_exporters' => [
+      'template' => 'itk-pretix-event-exporters',
+      'variables' => [
+        'node' => NULL,
+        'exporters' => NULL,
+      ],
+    ],
   ];
 }
 

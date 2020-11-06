@@ -6,11 +6,13 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\itk_pretix\Exception\ExporterException;
 use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Client;
 use ItkDev\Pretix\Api\Entity\Event;
 use ItkDev\Pretix\Api\Entity\Quota;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Pretix helper.
@@ -520,6 +522,56 @@ class EventHelper extends AbstractHelper {
     }
 
     return NULL;
+  }
+
+  /**
+   * Get exporters for an event.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   *
+   * @return array|Exporter[]|\ItkDev\Pretix\Api\Collections\EntityCollectionInterface
+   *   The exporters.
+   */
+  public function getExporters(NodeInterface $node) {
+    $info = $this->loadPretixEventInfo($node);
+    $eventSlug = $info['pretix_event_slug'] ?? NULL;
+    $client = $this->getPretixClient($node);
+
+    return $client->getEventExporters($eventSlug);
+  }
+
+  /**
+   * Run exporter.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   * @param string $identifier
+   *   The exporter identifier.
+   * @param array $parameters
+   *   The exporter parameters.
+   *
+   * @return array
+   *   The exporter run data.
+   */
+  public function runExporter(NodeInterface $node, string $identifier, array $parameters) {
+    $info = $this->loadPretixEventInfo($node);
+    $eventSlug = $info['pretix_event_slug'] ?? NULL;
+    $client = $this->getPretixClient($node);
+
+    $response = $client->runExporter($eventSlug, $identifier, $parameters);
+    if (Response::HTTP_ACCEPTED !== $response->getStatusCode()) {
+      throw new ExporterException($response->getReasonPhrase());
+    }
+
+    return json_decode($response->getBody(), TRUE);
+  }
+
+  /**
+   * Get export result.
+   */
+  public function getExport(NodeInterface $node, array $run) {
+    return $this->getPretixClient($node)->getExport($run);
   }
 
   /**

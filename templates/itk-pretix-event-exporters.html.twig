@@ -1,0 +1,30 @@
+<div class="itk-pretix-event-exporters">
+  <h1>{{ 'Exporters'|t }}</h1>
+
+  {% for exporter in exporters %}
+    {% if true or 'orderlist' == exporter.getIdentifier() %}
+      <fieldset>
+        <legend>{{ exporter.name }}</legend>
+
+        <form action="{{ path('itk_pretix.pretix_exporter_run', {node: node.id, identifier: exporter.getIdentifier()}) }}" method="post">
+          {% for parameter in exporter.getInputParameters %}
+            <div class="parameter">
+            <label>{{ parameter.name }}
+              {% if parameter.choices|default(false) %}
+                <select name="{{ parameter.name }}">
+                  {% for choice in parameter.choices %}
+                    <option>{{ choice }}</option>
+                  {% endfor %}
+                </select>
+              {% else %}
+                <input name="{{ parameter.name }}"/>
+              {% endif %}
+            </label>
+            </div>
+          {% endfor %}
+          <button type="submit">{{ 'Run'|t }}</button>
+        </form>
+      </fieldset>
+    {% endif %}
+  {% endfor %}
+</div>

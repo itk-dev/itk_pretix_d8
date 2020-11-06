@@ -45,3 +45,46 @@ itk_pretix.pretix_orders_date:
     parameters:
       node:
         type: entity:node
+
+itk_pretix.pretix_exporters:
+  path: '/itk_pretix/pretix/exporters/{node}'
+  defaults:
+    _controller: '\Drupal\itk_pretix\Controller\PretixExportersController::index'
+    _title: 'pretix exporters'
+  methods: [GET]
+  requirements:
+    # We have to check permissions in the controller.
+    _permission: 'access content'
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+itk_pretix.pretix_exporter_run:
+  path: '/itk_pretix/pretix/exporters/{node}/exporter/{identifier}/run'
+  methods: [POST]
+  defaults:
+    _controller: '\Drupal\itk_pretix\Controller\PretixExportersController::runExporter'
+    _title: 'pretix start exporter'
+  methods: [GET]
+  requirements:
+    # We have to check permissions in the controller.
+    _permission: 'access content'
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+itk_pretix.pretix_exporter_show:
+  path: '/itk_pretix/pretix/exporters/{node}/exporter/{identifier}/show/{key}'
+  defaults:
+    _controller: '\Drupal\itk_pretix\Controller\PretixExportersController::showExport'
+    _title: 'pretix start exporter'
+  methods: [GET]
+  requirements:
+    # We have to check permissions in the controller.
+    _permission: 'access content'
+  options:
+    parameters:
+      node:
+        type: entity:node
