@@ -169,6 +169,17 @@ class PretixDateWidget extends WidgetBase {
           ],
         ];
       }
+
+      $url = Url::fromRoute('itk_pretix.pretix_exporter_event', ['node' => $item->getEntity()->id()]);
+      $element['pretix_links']['pretix_orders'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Exports'),
+        'value' => [
+          '#title' => $this->t('Exports'),
+          '#type' => 'link',
+          '#url' => $url,
+        ],
+      ];
     }
 
     // If cardinality is 1, ensure a label is output for the field by wrapping

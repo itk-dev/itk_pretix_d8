@@ -15,3 +15,23 @@ services:
     class: Drupal\itk_pretix\Pretix\OrderHelper
     arguments:
       - '@database'
+
+  itk_pretix.exporter_manager:
+    class: Drupal\itk_pretix\Exporter\Manager
+    tags:
+      - { name: service_collector, tag: itk_pretix_exporter, call: addEventExporter }
+
+  itk_pretix.exporter.itk_pretix_exporter_check_in_list:
+    class: Drupal\itk_pretix\Exporter\CheckInListExporter
+    tags:
+      - { name: itk_pretix_exporter }
+
+  itk_pretix.exporter.itk_pretix_exporter_check_in_list_pdf:
+    class: Drupal\itk_pretix\Exporter\CheckInListPdfExporter
+    tags:
+      - { name: itk_pretix_exporter }
+
+  itk_pretix.exporter.itk_pretix_exporter_orderlist:
+    class: Drupal\itk_pretix\Exporter\OrderListExporter
+    tags:
+      - { name: itk_pretix_exporter }

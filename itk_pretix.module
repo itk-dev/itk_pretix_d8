@@ -6,7 +6,6 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 
 /**
@@ -53,6 +52,7 @@ function itk_pretix_theme() {
       'variables' => [
         'node' => NULL,
         'exporters' => NULL,
+        'exporter_forms' => NULL,
       ],
     ],
   ];

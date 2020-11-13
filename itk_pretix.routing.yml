@@ -46,12 +46,12 @@ itk_pretix.pretix_orders_date:
       node:
         type: entity:node
 
-itk_pretix.pretix_exporters:
-  path: '/itk_pretix/pretix/exporters/{node}'
+itk_pretix.pretix_exporter_event:
+  path: '/itk_pretix/pretix/event/exporters/{node}'
   defaults:
-    _controller: '\Drupal\itk_pretix\Controller\PretixExportersController::index'
+    _controller: '\Drupal\itk_pretix\Controller\PretixEventExportersController::index'
     _title: 'pretix exporters'
-  methods: [GET]
+  methods: [GET, POST]
   requirements:
     # We have to check permissions in the controller.
     _permission: 'access content'
@@ -59,12 +59,13 @@ itk_pretix.pretix_exporters:
     parameters:
       node:
         type: entity:node
+    _admin_route: TRUE
 
-itk_pretix.pretix_exporter_run:
-  path: '/itk_pretix/pretix/exporters/{node}/exporter/{identifier}/run'
+itk_pretix.pretix_exporter_event_show:
+  path: '/itk_pretix/pretix/event/exporters/{node}/exporter/{identifier}/show'
   methods: [POST]
   defaults:
-    _controller: '\Drupal\itk_pretix\Controller\PretixExportersController::runExporter'
+    _controller: '\Drupal\itk_pretix\Controller\PretixEventExportersController::showExporter'
     _title: 'pretix start exporter'
   methods: [GET]
   requirements:
@@ -74,11 +75,13 @@ itk_pretix.pretix_exporter_run:
     parameters:
       node:
         type: entity:node
+    _admin_route: TRUE
 
-itk_pretix.pretix_exporter_show:
-  path: '/itk_pretix/pretix/exporters/{node}/exporter/{identifier}/show/{key}'
+itk_pretix.pretix_exporter_event_run:
+  path: '/itk_pretix/pretix/event/exporters/{node}/exporter/{identifier}/run'
+  methods: [POST]
   defaults:
-    _controller: '\Drupal\itk_pretix\Controller\PretixExportersController::showExport'
+    _controller: '\Drupal\itk_pretix\Controller\PretixEventExportersController::runExporter'
     _title: 'pretix start exporter'
   methods: [GET]
   requirements:
@@ -88,3 +91,19 @@ itk_pretix.pretix_exporter_show:
     parameters:
       node:
         type: entity:node
+    _admin_route: TRUE
+
+itk_pretix.pretix_exporter_event_run_show:
+  path: '/itk_pretix/pretix/event/exporters/{node}/exporter/{identifier}/run/{key}'
+  defaults:
+    _controller: '\Drupal\itk_pretix\Controller\PretixEventExportersController::showRun'
+    _title: 'pretix start exporter'
+  methods: [GET]
+  requirements:
+    # We have to check permissions in the controller.
+    _permission: 'access content'
+  options:
+    parameters:
+      node:
+        type: entity:node
+    _admin_route: TRUE
