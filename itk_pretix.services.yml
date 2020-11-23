@@ -35,3 +35,11 @@ services:
     class: Drupal\itk_pretix\Exporter\OrderListExporter
     tags:
       - { name: itk_pretix_exporter }
+
+  itk_pretix.access_check:
+    class: Drupal\itk_pretix\Access\AccessCheck
+    arguments:
+      - '@current_user'
+      - '@current_route_match'
+    tags:
+      - { name: access_check, applies_to: _itk_pretix_export_access_check }

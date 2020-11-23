@@ -3,15 +3,17 @@
 namespace Drupal\itk_pretix\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\File\FileSystem;
 use Drupal\Core\Url;
 use Drupal\itk_pretix\Exception\ExporterException;
 use Drupal\itk_pretix\Exporter\AbstractExporter;
 use Drupal\node\NodeInterface;
-use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Pretix controller.
@@ -60,13 +62,9 @@ class PretixEventExportersController extends ControllerBase {
    *   The node.
    */
   public function index(Request $request, NodeInterface $node) {
-    $user = User::load(\Drupal::currentUser()->id());
-    if (!$node->access('update', $user)) {
-      throw new AccessDeniedHttpException();
-    }
-
-    if ('POST' === $request->getMethod()) {
-      header('content-type: text/plain'); echo var_export($request->request->all(), TRUE); die(__FILE__ . ':' . __LINE__ . ':' . __METHOD__);
+    if (!\Drupal::hasService('stream_wrapper.private')) {
+      \Drupal::messenger()->addError($this->t('Private path must be set up to run exporters.'));
+      throw new BadRequestHttpException(__FILE__);
     }
 
     $exporters = $this->exporterManager->getEventExporters();
@@ -80,8 +78,10 @@ class PretixEventExportersController extends ControllerBase {
     return [
       '#theme' => 'itk_pretix_event_exporters',
       '#node' => $node,
-    // '#exporters' => $this->eventHelper->getExporters($node),
       '#exporter_forms' => $exporterForms,
+      '#attached' => [
+        'library' => ['itk_pretix/exporters'],
+      ],
     ];
   }
 
@@ -158,10 +158,29 @@ class PretixEventExportersController extends ControllerBase {
       case Response::HTTP_OK:
         $this->session->remove($key);
 
+        $header = $response->getHeaderLine('content-disposition');
+        if (preg_match('/filename="(?<filename>[^"]+)"/', $header, $matches)) {
+          $filename = $matches['filename'];
+
+          /** @var \Drupal\Core\File\FileSystem $fileSystem */
+          $fileSystem = \Drupal::service('file_system');
+          $filePath = 'private://itk_pretix/exporters/' . $filename;
+          $directory = dirname($filePath);
+          $fileSystem->prepareDirectory($directory, FileSystem::CREATE_DIRECTORY);
+          $filePath = $fileSystem->realpath($filePath);
+          file_put_contents($filePath, (string) $response->getBody());
+          file_put_contents($filePath . '.headers', json_encode($response->getHeaders()));
+
+          return $this->redirect('itk_pretix.pretix_exporter_download', [
+            'node' => $node->id(),
+            'filename' => $filename,
+          ]);
+        }
+
         return $response;
 
       case Response::HTTP_CONFLICT:
-        sleep(10);
+        sleep(2);
         return $this->redirect('itk_pretix.pretix_exporter_event_run_show', [
           'node' => $node->id(),
           'identifier' => $identifier,
@@ -172,12 +191,27 @@ class PretixEventExportersController extends ControllerBase {
       case Response::HTTP_NOT_FOUND:
       default:
         $this->session->remove($key);
-        $this->messenger()->addError(sprintf('%d: %s', $response->getStatusCode(), json_encode((string) $response->getBody())));
+        $this->messenger()->addError(sprintf('%d: %s', $response->getStatusCode(),
+          json_encode((string) $response->getBody())));
         return $this->redirect('itk_pretix.pretix_exporter_event', [
           'node' => $node->id(),
         ]);
     }
+  }
 
+  /**
+   * Download exporter result.
+   */
+  public function download(Request $request, NodeInterface $node, string $filename) {
+    $path = 'private://itk_pretix/exporters/' . $filename;
+    $path = \Drupal::service('file_system')->realpath($path);
+
+    if ($path && file_exists($path)) {
+      $headers = json_decode(file_get_contents($path . '.headers'), TRUE) ?? [];
+      return new BinaryFileResponse($path, Response::HTTP_OK, $headers);
+    }
+
+    throw new NotFoundHttpException();
   }
 
 }
