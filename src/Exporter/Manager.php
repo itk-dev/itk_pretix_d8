@@ -48,4 +48,27 @@ class Manager {
     return $this->eventExporters[$id] ?? NULL;
   }
 
+  /**
+   * Implementation of itk_pretix_file_download.
+   *
+   * @param string $uri
+   *   The file uri.
+   */
+  public function fileDownload(string $uri) {
+    if (0 === strpos($uri, 'private://itk_pretix/exporters/')) {
+      $user = \Drupal::currentUser();
+      if ($user->isAuthenticated()) {
+        $filename = basename($uri);
+
+        return [
+          'content-disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+      }
+
+      return -1;
+    }
+
+    return NULL;
+  }
+
 }

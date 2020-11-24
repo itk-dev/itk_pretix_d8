@@ -101,17 +101,3 @@ itk_pretix.pretix_exporter_event_run_show:
       node:
         type: entity:node
     _admin_route: TRUE
-
-itk_pretix.pretix_exporter_download:
-  path: '/itk_pretix/pretix/event/exporters/{node}/download/{filename}'
-  defaults:
-    _controller: '\Drupal\itk_pretix\Controller\PretixEventExportersController::download'
-    _title: 'download exporter result'
-  methods: [GET]
-  requirements:
-    _itk_pretix_export_access_check: 'TRUE'
-  options:
-    parameters:
-      node:
-        type: entity:node
-    _admin_route: TRUE

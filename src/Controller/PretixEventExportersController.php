@@ -9,11 +9,10 @@ use Drupal\itk_pretix\Exception\ExporterException;
 use Drupal\itk_pretix\Exporter\AbstractExporter;
 use Drupal\node\NodeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Pretix controller.
@@ -162,19 +161,16 @@ class PretixEventExportersController extends ControllerBase {
         if (preg_match('/filename="(?<filename>[^"]+)"/', $header, $matches)) {
           $filename = $matches['filename'];
 
+          $url = 'private://itk_pretix/exporters/' . $filename;
+          $directory = dirname($url);
           /** @var \Drupal\Core\File\FileSystem $fileSystem */
           $fileSystem = \Drupal::service('file_system');
-          $filePath = 'private://itk_pretix/exporters/' . $filename;
-          $directory = dirname($filePath);
           $fileSystem->prepareDirectory($directory, FileSystem::CREATE_DIRECTORY);
-          $filePath = $fileSystem->realpath($filePath);
+          $filePath = $fileSystem->realpath($url);
           file_put_contents($filePath, (string) $response->getBody());
           file_put_contents($filePath . '.headers', json_encode($response->getHeaders()));
 
-          return $this->redirect('itk_pretix.pretix_exporter_download', [
-            'node' => $node->id(),
-            'filename' => $filename,
-          ]);
+          return new RedirectResponse(file_create_url($url));
         }
 
         return $response;
@@ -197,21 +193,6 @@ class PretixEventExportersController extends ControllerBase {
           'node' => $node->id(),
         ]);
     }
-  }
-
-  /**
-   * Download exporter result.
-   */
-  public function download(Request $request, NodeInterface $node, string $filename) {
-    $path = 'private://itk_pretix/exporters/' . $filename;
-    $path = \Drupal::service('file_system')->realpath($path);
-
-    if ($path && file_exists($path)) {
-      $headers = json_decode(file_get_contents($path . '.headers'), TRUE) ?? [];
-      return new BinaryFileResponse($path, Response::HTTP_OK, $headers);
-    }
-
-    throw new NotFoundHttpException();
   }
 
 }
