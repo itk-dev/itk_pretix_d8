@@ -58,6 +58,16 @@ class Manager {
     if (0 === strpos($uri, 'private://itk_pretix/exporters/')) {
       $user = \Drupal::currentUser();
       if ($user->isAuthenticated()) {
+        // Try to get headers from actual exporter run.
+        $fileSystem = \Drupal::service('file_system');
+        $filePath = $fileSystem->realpath($uri . '.headers');
+        if ($filePath) {
+          $headers = json_decode(file_get_contents($filePath), TRUE);
+          if ($headers) {
+            return $headers;
+          }
+        }
+
         $filename = basename($uri);
 
         return [
