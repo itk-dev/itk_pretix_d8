@@ -157,19 +157,6 @@ class PretixDateWidget extends WidgetBase {
         ];
       }
 
-      if (NULL !== $pretixOrdersUrl) {
-        $url = $pretixOrdersUrl;
-        $element['pretix_links']['pretix_orders_url'] = [
-          '#type' => 'item',
-          '#title' => $this->t('Pretix orders'),
-          'value' => [
-            '#title' => $this->t('Show pretix orders'),
-            '#type' => 'link',
-            '#url' => $url,
-          ],
-        ];
-      }
-
       $url = Url::fromRoute('itk_pretix.pretix_exporter_event', ['node' => $item->getEntity()->id()]);
       $element['pretix_links']['pretix_orders'] = [
         '#type' => 'item',

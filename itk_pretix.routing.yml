@@ -17,33 +17,6 @@ itk_pretix.pretix_webhook:
   requirements:
     _permission: 'access content'
 
-itk_pretix.pretix_orders:
-  path: '/itk_pretix/pretix/orders/{node}'
-  defaults:
-    _controller: '\Drupal\itk_pretix\Controller\PretixController::orders'
-    _title: 'pretix orders'
-  methods: [GET]
-  requirements:
-    _itk_pretix_export_access_check: 'TRUE'
-  options:
-    parameters:
-      node:
-        type: entity:node
-
-itk_pretix.pretix_orders_date:
-  path: '/itk_pretix/pretix/orders/{node}/{uuid}'
-  defaults:
-    _controller: '\Drupal\itk_pretix\Controller\PretixController::ordersDate'
-    _title: 'pretix date orders'
-  methods: [GET]
-  requirements:
-    _itk_pretix_export_access_check: 'TRUE'
-    _format: 'html|json|csv'
-  options:
-    parameters:
-      node:
-        type: entity:node
-
 itk_pretix.pretix_exporter_event:
   path: '/itk_pretix/pretix/event/exporters/{node}'
   defaults:
