@@ -3,7 +3,6 @@
 namespace Drupal\itk_pretix\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\File\FileSystem;
 use Drupal\Core\Url;
 use Drupal\itk_pretix\Exception\ExporterException;
 use Drupal\itk_pretix\Exporter\AbstractExporter;
@@ -157,25 +156,12 @@ class PretixEventExportersController extends ControllerBase {
       case Response::HTTP_OK:
         $this->session->remove($key);
 
-        $header = $response->getHeaderLine('content-disposition');
-        if (preg_match('/filename="(?<filename>[^"]+)"/', $header, $matches)) {
-          $filename = $matches['filename'];
+        $url = $this->exporterManager->saveExporterResult($node, $response);
 
-          $url = 'private://itk_pretix/exporters/' . $filename;
-          $directory = dirname($url);
-          /** @var \Drupal\Core\File\FileSystem $fileSystem */
-          $fileSystem = \Drupal::service('file_system');
-          $fileSystem->prepareDirectory($directory, FileSystem::CREATE_DIRECTORY);
-          $filePath = $fileSystem->realpath($url);
-          file_put_contents($filePath, (string) $response->getBody());
-          file_put_contents($filePath . '.headers', json_encode($response->getHeaders()));
-
-          return new RedirectResponse(file_create_url($url));
-        }
-
-        return $response;
+        return new RedirectResponse($url);
 
       case Response::HTTP_CONFLICT:
+        // We have to wait a little before retrying (cf. https://docs.pretix.eu/en/latest/api/resources/exporters.html#downloading-the-result).
         sleep(2);
         return $this->redirect('itk_pretix.pretix_exporter_event_run_show', [
           'node' => $node->id(),

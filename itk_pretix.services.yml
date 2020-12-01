@@ -18,6 +18,10 @@ services:
 
   itk_pretix.exporter_manager:
     class: Drupal\itk_pretix\Exporter\Manager
+    arguments:
+      - '@file_system'
+      - '@itk_pretix.access_check'
+      - '@current_user'
     tags:
       - { name: service_collector, tag: itk_pretix_exporter, call: addEventExporter }
 
