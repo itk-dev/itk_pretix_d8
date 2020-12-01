@@ -2,7 +2,7 @@ itk_pretix.pretix_config_form:
   path: '/admin/config/itk_pretix/pretixconfig'
   defaults:
     _form: '\Drupal\itk_pretix\Form\PretixConfigForm'
-    _title: 'PretixConfigForm'
+    _title: 'Pretix settings'
   requirements:
     _permission: 'access administration pages'
   options:
