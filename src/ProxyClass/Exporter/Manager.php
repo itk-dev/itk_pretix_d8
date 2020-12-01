@@ -78,9 +78,9 @@ namespace Drupal\itk_pretix\ProxyClass\Exporter {
         /**
          * {@inheritdoc}
          */
-        public function getEventExporters()
+        public function getEventExporters(array $ids = NULL)
         {
-            return $this->lazyLoadItself()->getEventExporters();
+            return $this->lazyLoadItself()->getEventExporters($ids);
         }
 
         /**

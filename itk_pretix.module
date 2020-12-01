@@ -51,6 +51,7 @@ function itk_pretix_theme() {
       'template' => 'itk-pretix-event-exporters',
       'variables' => [
         'node' => NULL,
+        'message' => NULL,
         'exporter_forms' => NULL,
       ],
     ],

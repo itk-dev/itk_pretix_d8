@@ -65,7 +65,11 @@ class PretixEventExportersController extends ControllerBase {
       throw new BadRequestHttpException(__FILE__);
     }
 
-    $exporters = $this->exporterManager->getEventExporters();
+    $config = $this->config('itk_pretix.pretixconfig');
+    $message = $config->get('event_exporters_message');
+    $enabled = $config->get('event_exporters_enabled');
+    $exporters = $this->exporterManager->getEventExporters($enabled);
+
     $exporterForms = array_map(function (AbstractExporter $exporter) use ($node) {
       return [
         'name' => $exporter->getName(),
@@ -76,6 +80,7 @@ class PretixEventExportersController extends ControllerBase {
     return [
       '#theme' => 'itk_pretix_event_exporters',
       '#node' => $node,
+      '#message' => $message,
       '#exporter_forms' => $exporterForms,
       '#attached' => [
         'library' => ['itk_pretix/exporters'],

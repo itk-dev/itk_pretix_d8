@@ -17,8 +17,14 @@ interface ManagerInterface {
 
   /**
    * Get event exporters.
+   *
+   * @param array|null $ids
+   *   Filter on exporter ids.
+   *
+   * @return array|ExporterInterface[]
+   *   The exporters.
    */
-  public function getEventExporters();
+  public function getEventExporters(array $ids = NULL);
 
   /**
    * Get event exporter.

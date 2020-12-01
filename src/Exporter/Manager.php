@@ -28,7 +28,7 @@ class Manager implements ManagerInterface {
   /**
    * The event exporter forms (indexed by form id).
    *
-   * @var array|AbstractExporter[]
+   * @var array|ExporterInterface[]
    */
   private $eventExporterForms;
 
@@ -75,8 +75,10 @@ class Manager implements ManagerInterface {
   /**
    * Get event exporters.
    */
-  public function getEventExporters() {
-    return $this->eventExporters;
+  public function getEventExporters(array $ids = NULL) {
+    return array_filter($this->eventExporters, static function (ExporterInterface $exporter) use ($ids) {
+      return NULL === $ids || in_array($exporter->getId(), $ids, TRUE);
+    });
   }
 
   /**
