@@ -18,6 +18,7 @@ services:
 
   itk_pretix.exporter_manager:
     class: Drupal\itk_pretix\Exporter\Manager
+    lazy: true
     arguments:
       - '@file_system'
       - '@itk_pretix.access_check'
@@ -27,16 +28,19 @@ services:
 
   itk_pretix.exporter.itk_pretix_exporter_check_in_list:
     class: Drupal\itk_pretix\Exporter\CheckInListExporter
+    lazy: true
     tags:
       - { name: itk_pretix_exporter }
 
   itk_pretix.exporter.itk_pretix_exporter_check_in_list_pdf:
     class: Drupal\itk_pretix\Exporter\CheckInListPdfExporter
+    lazy: true
     tags:
       - { name: itk_pretix_exporter }
 
   itk_pretix.exporter.itk_pretix_exporter_orderlist:
     class: Drupal\itk_pretix\Exporter\OrderListExporter
+    lazy: true
     tags:
       - { name: itk_pretix_exporter }
 
