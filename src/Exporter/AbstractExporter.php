@@ -13,7 +13,7 @@ use RuntimeException;
 /**
  * Abstract exporter.
  */
-abstract class AbstractExporter extends FormBase {
+abstract class AbstractExporter extends FormBase implements ExporterInterface {
   /**
    * The exporter id.
    *
@@ -43,7 +43,7 @@ abstract class AbstractExporter extends FormBase {
   protected $eventInfo;
 
   /**
-   * Get id.
+   * {@inheritdoc}
    */
   public function getId() {
     if (NULL === static::$id) {
@@ -53,7 +53,7 @@ abstract class AbstractExporter extends FormBase {
   }
 
   /**
-   * Get name.
+   * {@inheritdoc}
    */
   public function getName() {
     if (NULL === static::$name) {

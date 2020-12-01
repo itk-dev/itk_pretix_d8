@@ -13,7 +13,7 @@ use GuzzleHttp\Psr7\Response;
 /**
  * Exporter manager.
  */
-class Manager {
+class Manager implements ManagerInterface {
   private const EXPORTER_RESULT_BASE_URL = 'private://itk_pretix/exporters';
 
   use StringTranslationTrait;
@@ -54,7 +54,7 @@ class Manager {
   private $currentUser;
 
   /**
-   * {@inheritdoc}
+   * Constructor.
    */
   public function __construct(FileSystem $fileSystem, AccessCheck $accessCheck, AccountInterface $currentUser) {
     $this->fileSystem = $fileSystem;
@@ -65,7 +65,7 @@ class Manager {
   /**
    * Add an event exporter.
    */
-  public function addEventExporter(AbstractExporter $exporter, $priority = 0) {
+  public function addEventExporter(ExporterInterface $exporter, $priority = 0) {
     $this->eventExporters[$exporter->getId()] = $exporter;
     $this->eventExporterForms[$exporter->getFormId()] = $exporter;
 
