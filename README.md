@@ -30,6 +30,20 @@ If the value of `pretix_event_slug_template` is not empty, but `!nid` does not
 occur in the value, `-!nid` will be appended and the final template will be
 `dev-local-!nid`.
 
+## Exporters
+
+This module exposes a number of event Data exporters that are run via the pretix
+REST api
+(cf. [https://docs.pretix.eu/en/latest/api/resources/exporters.html](https://docs.pretix.eu/en/latest/api/resources/exporters.html))
+
+All exporters implement `Drupal\itk_pretix\Exporter\ExporterInterface` (by
+extending `Drupal\itk_pretix\Exporter\AbstractExporter`) and are managed by
+`Drupal\itk_pretix\Exporter\Manager` which takes care of displaying exporter
+parameters forms and running exporters.
+
+The available exporters for a node can be run from
+`/itk_pretix/pretix/event/exporters/{node}` where `{node}` is the node id.
+
 ## Building assets
 
 First, install tools and requirements:

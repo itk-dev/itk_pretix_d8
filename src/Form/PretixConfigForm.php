@@ -5,6 +5,7 @@ namespace Drupal\itk_pretix\Form;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\itk_pretix\Exporter\ManagerInterface as ExporterManagerInterface;
 use Drupal\itk_pretix\Pretix\EventHelper;
 use Drupal\itk_pretix\Pretix\OrderHelper;
 use ItkDev\Pretix\Api\Client;
@@ -29,12 +30,20 @@ class PretixConfigForm extends ConfigFormBase {
   private $orderHelper;
 
   /**
+   * The exporter manager.
+   *
+   * @var ExporterManager
+   */
+  private $exporterManager;
+
+  /**
    * {@inheritDoc}
    */
-  public function __construct(ConfigFactoryInterface $config_factory, EventHelper $eventHelper, OrderHelper $orderHelper) {
+  public function __construct(ConfigFactoryInterface $config_factory, EventHelper $eventHelper, OrderHelper $orderHelper, ExporterManagerInterface $exporterManager) {
     parent::__construct($config_factory);
     $this->eventHelper = $eventHelper;
     $this->orderHelper = $orderHelper;
+    $this->exporterManager = $exporterManager;
   }
 
   /**
@@ -44,7 +53,8 @@ class PretixConfigForm extends ConfigFormBase {
     return new static(
       $container->get('config.factory'),
       $container->get('itk_pretix.event_helper'),
-      $container->get('itk_pretix.order_helper')
+      $container->get('itk_pretix.order_helper'),
+      $container->get('itk_pretix.exporter_manager')
     );
   }
 
@@ -107,6 +117,32 @@ class PretixConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $eventExporterOptions = [];
+    foreach ($this->exporterManager->getEventExporters() as $exporter) {
+      $eventExporterOptions[$exporter->getId()] = $exporter->getName();
+    }
+
+    $form['exporters'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Exporters'),
+
+      'event_exporters_message' => [
+        '#type' => 'textarea',
+        '#title' => $this->t('Event exporters message'),
+        '#description' => $this->t('Message to show on the event exporters page.'),
+        '#default_value' => $config->get('event_exporters_message'),
+      ],
+
+      'event_exporters_enabled' => [
+        '#type' => 'checkboxes',
+        '#title' => $this->t('Enabled event exporters'),
+        '#description' => $this->t('Select event exporters to enable'),
+        '#options' => $eventExporterOptions,
+        '#multiple' => TRUE,
+        '#default_value' => $config->get('event_exporters_enabled'),
+      ],
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -121,6 +157,8 @@ class PretixConfigForm extends ConfigFormBase {
       ->set('organizer_slug', $form_state->getValue('organizer_slug'))
       ->set('api_token', $form_state->getValue('api_token'))
       ->set('template_event_slugs', $form_state->getValue('template_event_slugs'))
+      ->set('event_exporters_message', $form_state->getValue('event_exporters_message'))
+      ->set('event_exporters_enabled', array_filter($form_state->getValue('event_exporters_enabled')))
       ->save();
   }
 

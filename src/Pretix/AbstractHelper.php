@@ -18,6 +18,9 @@ use ItkDev\Pretix\Api\Entity\SubEvent;
 abstract class AbstractHelper {
   use StringTranslationTrait;
 
+  public const PRETIX_ORGANIZER_SHORT_CODE = 'pretix_organizer_slug';
+  public const PRETIX_EVENT_SLUG = 'pretix_event_slug';
+
   /**
    * The pretix client.
    *
@@ -245,9 +248,9 @@ abstract class AbstractHelper {
         'pretix_url' => $subEvent->getPretixUrl(),
         'pretix_subevent_url' => $subEvent->getUrl(),
         'pretix_subevent_shop_url' => $subEvent->getShopUrl(),
-        'subevent' => $subEvent->toArray(),
       ];
     }
+    $data['subevent'] = $subEvent->toArray();
 
     // Add any existing data.
     $data += $info['data'] ?? [];
