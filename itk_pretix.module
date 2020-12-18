@@ -6,7 +6,6 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 
 /**
@@ -46,6 +45,14 @@ function itk_pretix_theme() {
         'sub_event' => NULL,
         'orders' => NULL,
         'exports' => NULL,
+      ],
+    ],
+    'itk_pretix_event_exporters' => [
+      'template' => 'itk-pretix-event-exporters',
+      'variables' => [
+        'node' => NULL,
+        'message' => NULL,
+        'exporter_forms' => NULL,
       ],
     ],
   ];
@@ -106,4 +113,12 @@ function itk_pretix_node_delete(NodeInterface $node) {
  */
 function itk_pretix_cloned_node_alter(NodeInterface $node) {
   \Drupal::service('itk_pretix.node_helper')->clonedNodeAlter($node);
+}
+
+/**
+ * Implements hook_file_download().
+ */
+function itk_pretix_file_download($uri)
+{
+  return \Drupal::service('itk_pretix.exporter_manager')->fileDownload($uri);
 }
