@@ -23,10 +23,10 @@ class CheckInListExporter extends AbstractExporter {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $formats = [
-      'xlsx' => 'Excel (.xlsx)',
-      'default' => 'CSV (with commas)',
-      'csv-excel' => 'CSV (Excel-style)',
-      'semicolon' => 'CSV (with semicolons)',
+      'xlsx' => $this->t('Excel (.xlsx)'),
+      'default' => $this->t('CSV (with commas)'),
+      'csv-excel' => $this->t('CSV (Excel-style)'),
+      'semicolon' => $this->t('CSV (with semicolons)'),
     ];
 
     return [
