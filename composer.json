@@ -15,17 +15,17 @@
         "dealerdirect/phpcodesniffer-composer-installer": "dev-master"
     },
     "scripts": {
-        "check-coding-standards/phpcs": [
+        "coding-standards-check/phpcs": [
             "vendor/bin/phpcs --standard=phpcs.xml.dist"
         ],
-        "check-coding-standards": [
-            "@check-coding-standards/phpcs"
+        "coding-standards-check": [
+            "@coding-standards-check/phpcs"
         ],
-        "apply-coding-standards/phpcs": [
+        "coding-standards-apply/phpcs": [
             "vendor/bin/phpcbf --standard=phpcs.xml.dist"
         ],
-        "apply-coding-standards": [
-            "@apply-coding-standards/phpcs"
+        "coding-standards-apply": [
+            "@coding-standards-apply/phpcs"
         ]
     },
     "repositories": {

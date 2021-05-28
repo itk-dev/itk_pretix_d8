@@ -11,6 +11,7 @@ use Drupal\itk_pretix\Plugin\Field\FieldType\PretixDate;
 use Drupal\node\NodeInterface;
 use ItkDev\Pretix\Api\Client;
 use ItkDev\Pretix\Api\Entity\Event;
+use ItkDev\Pretix\Api\Entity\Event\Settings as EventSettings;
 use ItkDev\Pretix\Api\Entity\Quota;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -108,6 +109,16 @@ class EventHelper extends AbstractHelper {
     }
 
     $eventData['event'] = $event->toArray();
+
+    // Event settings.
+    $contactMail = $node->get('field_email_address')->getValue()[0]['value'] ?? NULL;
+    if (empty($contactMail)) {
+      // In pretix the contact mail cannot be empty, but it can be null.
+      $contactMail = NULL;
+    }
+    $eventSettings = $client->setEventSetting($event, EventSettings::CONTACT_MAIL, $contactMail);
+    $eventData['event_settings'] = $eventSettings->toArray();
+
     $info = $this->addPretixEventInfo($node, $event, $eventData);
     $subEvents = $this->synchronizePretixSubEvents($event, $node, $dates, $client);
 
