@@ -72,13 +72,13 @@ Check the coding standards by running
 
 ```sh
 composer install
-composer check-coding-standards
+composer coding-standards-check
 ```
 
 Apply the coding standards by running
 
 ```sh
-composer apply-coding-standards
+composer coding-standards-apply
 ```
 
 ### Assets

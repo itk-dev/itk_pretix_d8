@@ -2,6 +2,7 @@
 
 namespace Drupal\itk_pretix\Pretix;
 
+use Event\Settings;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
@@ -108,6 +109,16 @@ class EventHelper extends AbstractHelper {
     }
 
     $eventData['event'] = $event->toArray();
+
+    // Event settings.
+    $contactMail = $node->get('field_email_address')->getValue()[0]['value'] ?? NULL;
+    if (empty($contactMail)) {
+      // In pretix the contact mail cannot be empty, but it can be null.
+      $contactMail = NULL;
+    }
+    $eventSettings = $client->setEventSetting($event, Settings::CONTACT_MAIL, $contactMail);
+    $eventData['event_settings'] = $eventSettings->toArray();
+
     $info = $this->addPretixEventInfo($node, $event, $eventData);
     $subEvents = $this->synchronizePretixSubEvents($event, $node, $dates, $client);
 
